@@ -1,0 +1,16 @@
+{
+  "name": "hermes-agentos",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hermes AgentOS - Production-grade Multi-Agent Infrastructure",
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "dev:web": "pnpm --filter @hermes/web dev",
+    "dev:server": "pnpm --filter @hermes/server dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
