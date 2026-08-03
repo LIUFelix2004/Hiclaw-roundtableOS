@@ -1,0 +1,56 @@
+﻿
+=== Test 1: Planner Decomposition ===
+  PASS: Should have 4 tasks, got 4
+  PASS: Should include data agent
+  PASS: Should include analyst agent
+  PASS: Should include writer agent
+  PASS: Should have 1 task, got 1
+  PASS: Should be research agent
+  PASS: Default should have 3 tasks, got 3
+  PASS: First should be research
+  PASS: Second should be analyst
+  PASS: Third should be writer
+  PASS: Research should have no deps
+  PASS: Analyst should depend on research
+  PASS: Writer should depend on research
+  PASS: Writer should depend on analyst
+  Planner: all decomposition tests passed
+
+=== Test 2: Scheduler DAG Ordering ===
+  PASS: Should have 3 levels, got 3
+  PASS: Level 0 should contain A
+  PASS: Level 1 should contain B and C
+  PASS: Level 2 should contain D
+  Scheduler: DAG topology tests passed
+
+=== Test 3: Cycle Detection ===
+  PASS: Cycle DAG should return 0 levels, got 0
+  Scheduler: cycle detection passed
+
+=== Test 4: Agent Registry ===
+  PASS: Should have agent for role: data
+  PASS: Agent role should match: data
+  PASS: Should have agent for role: research
+  PASS: Agent role should match: research
+  PASS: Should have agent for role: analyst
+  PASS: Agent role should match: analyst
+  PASS: Should have agent for role: writer
+  PASS: Agent role should match: writer
+  Scheduler: agent registry passed
+
+=== Test 5: Chinese Decomposition ===
+  PASS: Chinese plan should have 4 tasks, got 4
+  PASS: Chinese plan should include all four agent roles
+
+=== Test 6: Mock End-to-End Chain ===
+  PASS: E2E should return 4 results, got 4
+  PASS: Every agent should produce non-empty output
+  PASS: Every agent should report token usage
+  PASS: Every agent should report cost
+  PASS: Should emit agent:stream events
+  PASS: Should emit agent:output events
+  PASS: Should emit agent:status events
+  Mock E2E: full task:create chain passed (4 agents, streaming + status + output)
+
+=== All self-tests passed ===
+

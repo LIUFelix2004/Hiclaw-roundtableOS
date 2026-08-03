@@ -1,39 +1,118 @@
 import Koa from 'koa';
 import cors from '@koa/cors';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import 'dotenv/config';
-import type { ClientToServerEvents, ServerToClientEvents } from '@hermes/shared';
+import type {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  SubTask,
+} from '@hermes/shared';
+import { Planner } from './planner';
+import { TaskScheduler } from './scheduler';
+import type { ExecutionContext } from './types';
+import { isMockEnabled } from './llm';
 
 const app = new Koa();
 app.use(cors());
+
+// Health endpoint for ops checks and demo probes.
+app.use(async (ctx, next) => {
+  if (ctx.method === 'GET' && ctx.path === '/health') {
+    ctx.body = {
+      status: 'ok',
+      service: 'hermes-agentos-server',
+      mock: isMockEnabled(),
+      uptime: process.uptime(),
+    };
+    return;
+  }
+  await next();
+});
 
 const httpServer = createServer(app.callback());
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: { origin: '*' },
 });
 
-io.on('connection', (socket) => {
+const planner = new Planner();
+const scheduler = new TaskScheduler();
+
+// Map socket to active task to prevent duplicate execution
+const activeTasks = new Map<string, string>();
+
+io.on('connection', (socket: Socket) => {
   console.log(`[connected] ${socket.id}`);
 
+  // ── task:create ──
   socket.on('task:create', async (data) => {
-    console.log(`[task:create] ${data.message}`);
-    // TODO: B implements Planner + Agent scheduling here
-    socket.emit('error', { message: 'Not implemented yet - B will build this!' });
+    console.log(`[task:create] "${data.message}" from ${socket.id}`);
+
+    // Prevent duplicate
+    if (activeTasks.has(socket.id)) {
+      socket.emit('error', {
+        message: `A task is already running for this connection. Wait for it to complete.`,
+      });
+      return;
+    }
+
+    const taskId = `task_${Date.now()}`;
+    activeTasks.set(socket.id, taskId);
+
+    const ctx: ExecutionContext = {
+      socketId: socket.id,
+      emit: (event, payload) => {
+        (socket as any).emit(event, payload);
+      },
+    };
+
+    try {
+      // 1. Planner decomposes the message
+      const plan = planner.plan(data.message);
+      console.log(`[planner] ${plan.tasks.length} subtasks:`, plan.reasoning);
+
+      // 2. Emit plan to client
+      socket.emit('task:plan', { tasks: plan.tasks });
+
+      // 3. Scheduler executes the DAG
+      const results = await scheduler.execute(plan.tasks, data.message, ctx);
+
+      // 4. Emit final summary
+      const summary = results
+        .map((r) => `[${r.role}] ${r.output.slice(0, 300)}${r.output.length > 300 ? '...' : ''}`)
+        .join('\n\n---\n\n');
+      socket.emit('agent:output', {
+        taskId,
+        agent: 'writer' as any,
+        content: `## Task Complete\n\n${summary}`,
+        tokens: results.reduce((s, r) => s + r.tokens, 0),
+        cost: results.reduce((s, r) => s + r.cost, 0),
+        duration: results.reduce((s, r) => s + r.duration, 0),
+      });
+    } catch (err: any) {
+      console.error(`[task:create] error:`, err);
+      socket.emit('error', { message: `Task failed: ${err.message}` });
+    } finally {
+      activeTasks.delete(socket.id);
+    }
   });
 
+  // ── roundtable:start (stub for Phase 2) ──
   socket.on('roundtable:start', async (data) => {
     console.log(`[roundtable:start] topic: ${data.topic}`);
-    // TODO: B implements roundtable engine here
-    socket.emit('error', { message: 'Not implemented yet - B will build this!' });
+    socket.emit('error', {
+      message: 'Roundtable engine will be implemented in Phase 2.',
+    });
   });
 
   socket.on('disconnect', () => {
     console.log(`[disconnected] ${socket.id}`);
+    activeTasks.delete(socket.id);
   });
 });
 
 const PORT = process.env.PORT || 8648;
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Hermes AgentOS server running on http://localhost:${PORT}`);
+  console.log(`Hermes AgentOS server running on http://localhost:${PORT}`);
+  console.log(`[llm] mock mode: ${isMockEnabled() ? 'ON (no real model calls)' : 'OFF'}`);
 });
