@@ -1,0 +1,37 @@
+{
+  "name": "data",
+  "version": "1.0.0",
+  "description": "企业级数据采集 Skill：结构化指标、来源证据与数据缺口标注",
+  "taskType": "data-collection",
+  "complexity": "low",
+  "model": "auto",
+  "capabilities": [
+    "structured-output",
+    "evidence-citation",
+    "data-gap-flagging",
+    "validator-compatible"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "taskId": { "type": "string" },
+      "task": { "type": "string" },
+      "inputData": {},
+      "previousResults": { "type": "array" },
+      "memory": {},
+      "snapshotId": { "type": "string" }
+    },
+    "required": ["taskId", "task"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "summary": { "type": "string" },
+      "dataPoints": { "type": "array" },
+      "dataGaps": { "type": "array" },
+      "assumptions": { "type": "array" },
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "required": ["summary", "dataPoints", "dataGaps", "assumptions", "confidence"]
+  }
+}

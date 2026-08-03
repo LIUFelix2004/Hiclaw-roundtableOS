@@ -45,6 +45,8 @@
 === Test 6: Mock End-to-End Chain ===
 
 === Test 7: Analyst Skill ===
+
+=== Test 8: Skill Agents ===
   PASS: E2E should return 4 results, got 4
   PASS: Every agent should produce non-empty output
   PASS: Every agent should report token usage
@@ -61,6 +63,31 @@
   PASS: Should emit agent:trace lifecycle
   PASS: Should emit agent:snapshot
   Analyst Skill: structured JSON output + trace/snapshot passed
+  PASS: data should return JSON object
+  PASS: data confidence should be 0-1
+  PASS: data should emit agent:trace
+  PASS: data should emit agent:snapshot
+  PASS: data should emit agent:output
+  data: structured output + trace/snapshot passed
+  PASS: research should return JSON object
+  PASS: research confidence should be 0-1
+  PASS: research should emit agent:trace
+  PASS: research should emit agent:snapshot
+  PASS: research should emit agent:output
+  research: structured output + trace/snapshot passed
+  PASS: analyst should return JSON object
+  PASS: analyst confidence should be 0-1
+  PASS: analyst should emit agent:trace
+  PASS: analyst should emit agent:snapshot
+  PASS: analyst should emit agent:output
+  analyst: structured output + trace/snapshot passed
+  PASS: writer should return JSON object
+  PASS: writer confidence should be 0-1
+  PASS: writer should emit agent:trace
+  PASS: writer should emit agent:snapshot
+  PASS: writer should emit agent:output
+  writer: structured output + trace/snapshot passed
+  Skill Agents: all four skills validated
 
 === All self-tests passed ===
 

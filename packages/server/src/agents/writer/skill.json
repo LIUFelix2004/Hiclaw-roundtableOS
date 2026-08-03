@@ -1,0 +1,45 @@
+{
+  "name": "writer",
+  "version": "1.0.0",
+  "description": "企业级内容创作 Skill：基于上游素材的结构化报告、章节与风险提示",
+  "taskType": "writing",
+  "complexity": "medium",
+  "model": "auto",
+  "capabilities": [
+    "structured-output",
+    "source-based",
+    "risk-disclosure",
+    "validator-compatible"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "taskId": { "type": "string" },
+      "task": { "type": "string" },
+      "inputData": {},
+      "previousResults": { "type": "array" },
+      "memory": {},
+      "snapshotId": { "type": "string" }
+    },
+    "required": ["taskId", "task"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "summary": { "type": "string" },
+      "sections": { "type": "array" },
+      "keyMessages": { "type": "array" },
+      "riskNote": { "type": "string" },
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "required": [
+      "title",
+      "summary",
+      "sections",
+      "keyMessages",
+      "riskNote",
+      "confidence"
+    ]
+  }
+}

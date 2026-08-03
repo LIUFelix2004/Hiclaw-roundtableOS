@@ -1,0 +1,46 @@
+{
+  "name": "research",
+  "version": "1.0.0",
+  "description": "企业级行业调研 Skill：主题发现、证据链、矛盾点与不确定性标注",
+  "taskType": "research",
+  "complexity": "medium",
+  "model": "auto",
+  "capabilities": [
+    "structured-output",
+    "evidence-based",
+    "contradiction-detection",
+    "uncertainty-flagging",
+    "validator-compatible"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "taskId": { "type": "string" },
+      "task": { "type": "string" },
+      "inputData": {},
+      "previousResults": { "type": "array" },
+      "memory": {},
+      "snapshotId": { "type": "string" }
+    },
+    "required": ["taskId", "task"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "summary": { "type": "string" },
+      "findings": { "type": "array" },
+      "contradictions": { "type": "array" },
+      "uncertainties": { "type": "array" },
+      "sources": { "type": "array" },
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "required": [
+      "summary",
+      "findings",
+      "contradictions",
+      "uncertainties",
+      "sources",
+      "confidence"
+    ]
+  }
+}

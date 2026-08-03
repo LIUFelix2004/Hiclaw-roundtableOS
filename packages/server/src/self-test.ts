@@ -7,7 +7,7 @@
 import { Planner } from './planner';
 import { TaskScheduler } from './scheduler';
 import type { SubTask } from '@hermes/shared';
-import { AnalystAgent } from './agents';
+import { AnalystAgent, DataAgent, ResearchAgent, WriterAgent } from './agents';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -169,11 +169,54 @@ async function testAnalystSkill(): Promise<void> {
   assert(events.includes('agent:snapshot'), 'Should emit agent:snapshot');
 
   console.log('  Analyst Skill: structured JSON output + trace/snapshot passed');
+}
+
+// ── Test 8: All Skill Agents structured output + trace/snapshot ──
+console.log('\n=== Test 8: Skill Agents ===');
+
+async function testAllSkills(): Promise<void> {
+  process.env.MOCK_LLM = '1';
+  const cases = [
+    { role: 'data', agent: new DataAgent(), input: '收集 AI 服务器产业链数据' },
+    { role: 'research', agent: new ResearchAgent(), input: '调研 AI 服务器产业链动态' },
+    { role: 'analyst', agent: new AnalystAgent(), input: '分析 AI 服务器产业链机会' },
+    { role: 'writer', agent: new WriterAgent(), input: '生成 AI 服务器产业链行业周报' },
+  ];
+
+  for (const item of cases) {
+    const events: string[] = [];
+    const ctx = {
+      socketId: 'self-test',
+      emit: (event: string) => {
+        events.push(event);
+      },
+    };
+    const result = await item.agent.execute(
+      `task-${item.role}`,
+      item.role,
+      item.input,
+      '--- Output from data ---\n{}',
+      ctx as any,
+    );
+    const parsed = JSON.parse(result.output);
+    assert(typeof parsed === 'object' && parsed !== null, `${item.role} should return JSON object`);
+    assert(
+      typeof parsed.confidence === 'number' && parsed.confidence >= 0 && parsed.confidence <= 1,
+      `${item.role} confidence should be 0-1`,
+    );
+    assert(events.includes('agent:trace'), `${item.role} should emit agent:trace`);
+    assert(events.includes('agent:snapshot'), `${item.role} should emit agent:snapshot`);
+    assert(events.includes('agent:output'), `${item.role} should emit agent:output`);
+    console.log(`  ${item.role}: structured output + trace/snapshot passed`);
+  }
+
+  console.log('  Skill Agents: all four skills validated');
   console.log('\n=== All self-tests passed ===\n');
 }
 
 testMockE2E()
   .then(testAnalystSkill)
+  .then(testAllSkills)
   .catch((err) => {
     console.error('FAIL: self-test error:', err);
     process.exit(1);
