@@ -1,4 +1,4 @@
-export type AgentRole = 'data' | 'research' | 'analyst' | 'writer';
+export type AgentRole = 'data' | 'research' | 'analyst' | 'writer' | 'moderator';
 
 export type TaskStatus = 'pending' | 'running' | 'success' | 'failed' | 'rollback';
 
@@ -54,12 +54,28 @@ export interface RoundtableConfig {
   maxRounds?: number;
 }
 
+export type RoundtableStance =
+  | 'propose'
+  | 'agree'
+  | 'challenge'
+  | 'supplement'
+  | 'moderate'
+  | 'synthesize';
+
 export interface RoundtableSpeech {
   round: number;
   agent: AgentRole;
   model: string;
   content: string;
-  stance: 'propose' | 'agree' | 'challenge' | 'supplement';
+  stance: RoundtableStance;
+}
+
+export interface RoundtableTask {
+  agent: string;
+  objective: string;
+  input: string;
+  expectedOutput: string;
+  deadline?: string;
 }
 
 export interface RoundtableConsensus {
@@ -67,6 +83,9 @@ export interface RoundtableConsensus {
   finalAnswer: string;
   agreements: string[];
   disagreements: string[];
+  finalSolution?: string;
+  executionTasks?: RoundtableTask[];
+  risks?: string[];
 }
 
 export interface ExperienceRecord {

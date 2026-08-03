@@ -1,0 +1,47 @@
+{
+  "name": "moderator",
+  "version": "1.0.0",
+  "description": "圆桌会议主持 Skill：目标确认、观点收集、收敛判定、执行协调与最终方案合成",
+  "taskType": "roundtable-moderator",
+  "complexity": "medium",
+  "model": "auto",
+  "capabilities": [
+    "structured-output",
+    "discussion-control",
+    "convergence-judgement",
+    "execution-planning",
+    "conflict-resolution",
+    "validator-compatible"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "taskId": { "type": "string" },
+      "task": { "type": "string" },
+      "inputData": {},
+      "previousResults": { "type": "array" },
+      "memory": {},
+      "snapshotId": { "type": "string" }
+    },
+    "required": ["taskId", "task"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "meetingSummary": { "type": "string" },
+      "finalSolution": { "type": "string" },
+      "agentContributions": { "type": "array" },
+      "executionTasks": { "type": "array" },
+      "risks": { "type": "array" },
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "required": [
+      "meetingSummary",
+      "finalSolution",
+      "agentContributions",
+      "executionTasks",
+      "risks",
+      "confidence"
+    ]
+  }
+}

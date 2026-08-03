@@ -11,6 +11,7 @@ const MODEL_MAP: Record<AgentRole, string> = {
   research: process.env.MODEL_RESEARCH || 'gpt-4o-mini',
   analyst: process.env.MODEL_ANALYST || 'gpt-4o',
   writer: process.env.MODEL_WRITER || 'gpt-4o',
+  moderator: process.env.MODEL_MODERATOR || 'gpt-4o',
 };
 
 export interface ChatOptions {
@@ -100,6 +101,23 @@ const MOCK_TEMPLATES: Record<AgentRole, (task: string) => string> = {
   "keyMessages": ["高景气延续", "国产替代加速", "液冷价值量提升"],
   "riskNote": "本文件为 Mock 演示输出，正式环境将基于真实数据源与质检结果生成。",
   "confidence": 0.78
+}`,
+  moderator: (task) => `{
+  "meetingSummary": "主题：${safeTopic(task)} — 圆桌讨论已完成：Data 提供结构化数据，Research 识别行业趋势与矛盾，Analyst 给出分阶段配置建议，Writer 输出报告框架；主要分歧已收敛为分阶段执行方案（Mock 演示数据）。",
+  "finalSolution": "优先布局储能，同时保留光伏跟踪仓位：第一阶段验证储能订单与政策落地，第二阶段根据数据切换加仓方向，并由 Validator 对最终报告执行质检。",
+  "agentContributions": [
+    {"agent": "data", "contribution": "提供储能与光伏出货、渗透率与政策数据（Mock）。"},
+    {"agent": "research", "contribution": "识别储能高景气与光伏供给过剩并存，标注不确定性。"},
+    {"agent": "analyst", "contribution": "建议分阶段配置，先储能后光伏，量化风险。"},
+    {"agent": "writer", "contribution": "输出报告结构与风险提示。"}
+  ],
+  "executionTasks": [
+    {"agent": "data", "objective": "补充储能订单与政策数据", "input": "储能产业链", "expectedOutput": "结构化数据 JSON", "deadline": "T+1"},
+    {"agent": "analyst", "objective": "更新分阶段配置建议", "input": "储能与光伏最新数据", "expectedOutput": "分析洞察 JSON", "deadline": "T+2"},
+    {"agent": "writer", "objective": "生成最终战略分析报告", "input": "Data/Analyst 输出", "expectedOutput": "报告 JSON", "deadline": "T+3"}
+  ],
+  "risks": ["储能补贴政策退坡", "光伏供给过剩持续", "Mock 演示数据口径限制"],
+  "confidence": 0.8
 }`,
 };
 

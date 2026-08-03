@@ -6,8 +6,10 @@
  */
 import { Planner } from './planner';
 import { TaskScheduler } from './scheduler';
-import type { SubTask } from '@hermes/shared';
+import type { AgentRole, SubTask } from '@hermes/shared';
 import { AnalystAgent, DataAgent, ResearchAgent, WriterAgent } from './agents';
+import type { SkillAgent } from './agents/skill-agent';
+import { RoundtableEngine } from './roundtable-engine';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -211,12 +213,58 @@ async function testAllSkills(): Promise<void> {
   }
 
   console.log('  Skill Agents: all four skills validated');
+}
+
+// ── Test 9: Roundtable Moderator Engine ──
+console.log('\n=== Test 9: Roundtable Moderator ===');
+
+async function testRoundtable(): Promise<void> {
+  process.env.MOCK_LLM = '1';
+  const events: string[] = [];
+  const ctx = {
+    socketId: 'self-test',
+    emit: (event: string) => {
+      events.push(event);
+    },
+  };
+
+  const participants = new Map<AgentRole, SkillAgent<any>>();
+  participants.set('data', new DataAgent());
+  participants.set('research', new ResearchAgent());
+  participants.set('analyst', new AnalystAgent());
+  participants.set('writer', new WriterAgent());
+
+  const engine = new RoundtableEngine(participants);
+  const consensus = await engine.start(
+    {
+      topic: '新能源企业应该优先布局储能还是光伏？',
+      agents: ['data', 'research', 'analyst', 'writer'],
+      maxRounds: 2,
+    },
+    ctx as any,
+  );
+
+  assert(consensus.rounds >= 1 && consensus.rounds <= 2, 'Roundtable rounds should be within bounds');
+  assert(
+    typeof consensus.finalAnswer === 'string' && consensus.finalAnswer.length > 0,
+    'finalAnswer should be non-empty',
+  );
+  assert(
+    Array.isArray(consensus.executionTasks) && consensus.executionTasks.length > 0,
+    'executionTasks should be non-empty',
+  );
+  assert(Array.isArray(consensus.risks) && consensus.risks.length > 0, 'risks should be non-empty');
+  assert(events.includes('roundtable:speech'), 'roundtable:speech should be emitted');
+  assert(events.includes('roundtable:consensus'), 'roundtable:consensus should be emitted');
+
+  console.log('  Roundtable: moderator engine passed');
   console.log('\n=== All self-tests passed ===\n');
 }
 
 testMockE2E()
   .then(testAnalystSkill)
   .then(testAllSkills)
+  .then(testRoundtable)
   .catch((err) => {
     console.error('FAIL: self-test error:', err);
     process.exit(1);

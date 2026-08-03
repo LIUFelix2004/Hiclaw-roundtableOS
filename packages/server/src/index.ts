@@ -6,12 +6,15 @@ import 'dotenv/config';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
+  AgentRole,
   SubTask,
 } from '@hermes/shared';
 import { Planner } from './planner';
 import { TaskScheduler } from './scheduler';
 import type { ExecutionContext } from './types';
 import { isMockEnabled } from './llm';
+import { RoundtableEngine } from './roundtable-engine';
+import type { SkillAgent } from './agents/skill-agent';
 
 const app = new Koa();
 app.use(cors());
@@ -38,8 +41,16 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
 const planner = new Planner();
 const scheduler = new TaskScheduler();
 
+const participants = new Map<AgentRole, SkillAgent<any>>();
+for (const role of ['data', 'research', 'analyst', 'writer'] as const) {
+  const agent = scheduler.getAgent(role);
+  if (agent) participants.set(role, agent as SkillAgent<any>);
+}
+const roundtableEngine = new RoundtableEngine(participants);
+
 // Map socket to active task to prevent duplicate execution
 const activeTasks = new Map<string, string>();
+const activeRoundtables = new Map<string, string>();
 
 io.on('connection', (socket: Socket) => {
   console.log(`[connected] ${socket.id}`);
@@ -97,17 +108,39 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // ── roundtable:start (stub for Phase 2) ──
+  // ── roundtable:start ──
   socket.on('roundtable:start', async (data) => {
     console.log(`[roundtable:start] topic: ${data.topic}`);
-    socket.emit('error', {
-      message: 'Roundtable engine will be implemented in Phase 2.',
-    });
+
+    if (activeRoundtables.has(socket.id)) {
+      socket.emit('error', {
+        message: 'A roundtable is already running for this connection.',
+      });
+      return;
+    }
+
+    activeRoundtables.set(socket.id, `rt_${Date.now()}`);
+    const ctx: ExecutionContext = {
+      socketId: socket.id,
+      emit: (event, payload) => {
+        (socket as any).emit(event, payload);
+      },
+    };
+
+    try {
+      await roundtableEngine.start(data, ctx);
+    } catch (err: any) {
+      console.error(`[roundtable:start] error:`, err);
+      socket.emit('error', { message: `Roundtable failed: ${err.message}` });
+    } finally {
+      activeRoundtables.delete(socket.id);
+    }
   });
 
   socket.on('disconnect', () => {
     console.log(`[disconnected] ${socket.id}`);
     activeTasks.delete(socket.id);
+    activeRoundtables.delete(socket.id);
   });
 });
 

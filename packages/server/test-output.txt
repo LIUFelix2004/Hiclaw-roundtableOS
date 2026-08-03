@@ -47,6 +47,8 @@
 === Test 7: Analyst Skill ===
 
 === Test 8: Skill Agents ===
+
+=== Test 9: Roundtable Moderator ===
   PASS: E2E should return 4 results, got 4
   PASS: Every agent should produce non-empty output
   PASS: Every agent should report token usage
@@ -88,6 +90,13 @@
   PASS: writer should emit agent:output
   writer: structured output + trace/snapshot passed
   Skill Agents: all four skills validated
+  PASS: Roundtable rounds should be within bounds
+  PASS: finalAnswer should be non-empty
+  PASS: executionTasks should be non-empty
+  PASS: risks should be non-empty
+  PASS: roundtable:speech should be emitted
+  PASS: roundtable:consensus should be emitted
+  Roundtable: moderator engine passed
 
 === All self-tests passed ===
 
