@@ -1,0 +1,48 @@
+{
+  "name": "analyst",
+  "version": "1.0.0",
+  "description": "企业级数据分析 Skill：趋势、异常、关联、风险与战略建议的结构化输出",
+  "taskType": "analysis",
+  "complexity": "medium",
+  "model": "auto",
+  "capabilities": [
+    "structured-output",
+    "evidence-based",
+    "confidence-scoring",
+    "risk-identification",
+    "validator-compatible"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "taskId": { "type": "string" },
+      "task": { "type": "string" },
+      "inputData": {},
+      "previousResults": { "type": "array" },
+      "memory": {},
+      "snapshotId": { "type": "string" }
+    },
+    "required": ["taskId", "task"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "summary": { "type": "string" },
+      "keyFindings": { "type": "array" },
+      "metrics": { "type": "object" },
+      "risks": { "type": "array" },
+      "recommendations": { "type": "array" },
+      "assumptions": { "type": "array" },
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "required": [
+      "summary",
+      "keyFindings",
+      "metrics",
+      "risks",
+      "recommendations",
+      "assumptions",
+      "confidence"
+    ]
+  }
+}

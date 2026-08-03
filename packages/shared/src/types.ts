@@ -91,3 +91,42 @@ export interface TraceSpan {
   cost?: number;
   status: TaskStatus;
 }
+
+export interface AgentTraceRecord {
+  traceId: string;
+  agent: AgentRole;
+  model: string;
+  tokens?: number;
+  cost?: number;
+  duration?: number;
+  status: TaskStatus;
+  phase?:
+    | 'START'
+    | 'CONTEXT_BUILD'
+    | 'MODEL_SELECTED'
+    | 'LLM_CALL'
+    | 'OUTPUT_VALIDATE'
+    | 'SNAPSHOT'
+    | 'SUCCESS'
+    | 'FAIL';
+  attempt?: number;
+  message?: string;
+}
+
+export interface AgentSnapshot {
+  snapshotId: string;
+  agent: AgentRole;
+  timestamp: number;
+  input: unknown;
+  output?: unknown;
+  model: string;
+  status?: TaskStatus;
+  error?: unknown;
+}
+
+export interface AgentErrorInfo {
+  taskId: string;
+  agent: AgentRole;
+  errorType: ErrorType;
+  message: string;
+}

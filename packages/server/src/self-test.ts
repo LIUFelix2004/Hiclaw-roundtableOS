@@ -7,6 +7,7 @@
 import { Planner } from './planner';
 import { TaskScheduler } from './scheduler';
 import type { SubTask } from '@hermes/shared';
+import { AnalystAgent } from './agents';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -114,7 +115,7 @@ assert(
 // ── Test 6: Mock end-to-end chain (no network) ──
 console.log('\n=== Test 6: Mock End-to-End Chain ===');
 
-(async () => {
+async function testMockE2E(): Promise<void> {
   process.env.MOCK_LLM = '1';
   const events: string[] = [];
   const ctx = {
@@ -134,11 +135,49 @@ console.log('\n=== Test 6: Mock End-to-End Chain ===');
   assert(events.includes('agent:status'), 'Should emit agent:status events');
 
   console.log('  Mock E2E: full task:create chain passed (4 agents, streaming + status + output)');
+}
+
+// ── Test 7: Analyst Skill structured output + trace/snapshot ──
+console.log('\n=== Test 7: Analyst Skill ===');
+
+async function testAnalystSkill(): Promise<void> {
+  process.env.MOCK_LLM = '1';
+  const events: string[] = [];
+  const ctx = {
+    socketId: 'self-test',
+    emit: (event: string) => {
+      events.push(event);
+    },
+  };
+
+  const analyst = new AnalystAgent();
+  const result = await analyst.execute(
+    'task-analyst',
+    'Analyze Findings',
+    '新能源行业战略分析',
+    '--- Output from data ---\n{"market_size": 100, "growth": 0.25}',
+    ctx as any,
+  );
+  const parsed = JSON.parse(result.output);
+
+  assert(typeof parsed.summary === 'string' && parsed.summary.length > 0, 'Analyst summary should be non-empty');
+  assert(Array.isArray(parsed.keyFindings) && parsed.keyFindings.length > 0, 'Analyst keyFindings should be non-empty');
+  assert(Array.isArray(parsed.risks), 'Analyst risks should be an array');
+  assert(Array.isArray(parsed.recommendations), 'Analyst recommendations should be an array');
+  assert(typeof parsed.confidence === 'number', 'Analyst confidence should be a number');
+  assert(events.includes('agent:trace'), 'Should emit agent:trace lifecycle');
+  assert(events.includes('agent:snapshot'), 'Should emit agent:snapshot');
+
+  console.log('  Analyst Skill: structured JSON output + trace/snapshot passed');
   console.log('\n=== All self-tests passed ===\n');
-})().catch((err) => {
-  console.error('FAIL: Mock E2E chain error:', err);
-  process.exit(1);
-});
+}
+
+testMockE2E()
+  .then(testAnalystSkill)
+  .catch((err) => {
+    console.error('FAIL: self-test error:', err);
+    process.exit(1);
+  });
 
 // Helper: topological level assignment
 function topologicalLevels(tasks: SubTask[]): Map<number, Set<string>> {

@@ -1,4 +1,4 @@
-import type { AgentRole, AgentOutput } from '@hermes/shared';
+import type { AgentRole, AgentOutput, AgentSnapshot, AgentTraceRecord } from '@hermes/shared';
 import type { AgentConfig, AgentResult, ExecutionContext } from '../types';
 import { chat } from '../llm';
 
@@ -92,7 +92,7 @@ export abstract class BaseAgent {
     throw new Error(message);
   }
 
-  private emitStatus(taskId: string, status: 'pending' | 'running' | 'success' | 'failed' | 'rollback', progress: number, ctx: ExecutionContext) {
+  protected emitStatus(taskId: string, status: 'pending' | 'running' | 'success' | 'failed' | 'rollback', progress: number, ctx: ExecutionContext) {
     ctx.emit('agent:status', {
       taskId,
       agent: this.role,
@@ -100,6 +100,14 @@ export abstract class BaseAgent {
       progress,
       model: this.model,
     });
+  }
+
+  protected emitTrace(ctx: ExecutionContext, record: AgentTraceRecord): void {
+    ctx.emit('agent:trace', record);
+  }
+
+  protected emitSnapshot(ctx: ExecutionContext, snapshot: AgentSnapshot): void {
+    ctx.emit('agent:snapshot', snapshot);
   }
 }
 

@@ -43,6 +43,8 @@
   PASS: Chinese plan should include all four agent roles
 
 === Test 6: Mock End-to-End Chain ===
+
+=== Test 7: Analyst Skill ===
   PASS: E2E should return 4 results, got 4
   PASS: Every agent should produce non-empty output
   PASS: Every agent should report token usage
@@ -51,6 +53,14 @@
   PASS: Should emit agent:output events
   PASS: Should emit agent:status events
   Mock E2E: full task:create chain passed (4 agents, streaming + status + output)
+  PASS: Analyst summary should be non-empty
+  PASS: Analyst keyFindings should be non-empty
+  PASS: Analyst risks should be an array
+  PASS: Analyst recommendations should be an array
+  PASS: Analyst confidence should be a number
+  PASS: Should emit agent:trace lifecycle
+  PASS: Should emit agent:snapshot
+  Analyst Skill: structured JSON output + trace/snapshot passed
 
 === All self-tests passed ===
 
