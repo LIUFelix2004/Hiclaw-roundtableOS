@@ -9,6 +9,8 @@ import type { ExecutionContext } from './types';
 import type { SkillAgent } from './agents/skill-agent';
 import { ModeratorAgent } from './agents/moderator';
 import type { ModeratorOutput } from './agents/moderator/schema';
+import { ValidatorAgent } from './agents/validator';
+import type { ValidatorOutput } from './agents/validator/schema';
 
 const DEFAULT_PARTICIPANTS: AgentRole[] = ['data', 'research', 'analyst', 'writer'];
 
@@ -21,6 +23,7 @@ const DEFAULT_PARTICIPANTS: AgentRole[] = ['data', 'research', 'analyst', 'write
  */
 export class RoundtableEngine {
   private moderator = new ModeratorAgent();
+  private validator = new ValidatorAgent();
 
   constructor(private participants: Map<AgentRole, SkillAgent<any>>) {}
 
@@ -81,6 +84,32 @@ export class RoundtableEngine {
       roundCtx,
     );
     const output = JSON.parse(moderatorResult.output) as ModeratorOutput;
+
+    // Output firewall: the final solution must pass Validator before consensus
+    // is published. failCodes are aligned with ErrorType for Rollback.
+    const validationCandidate = `--- Output from [moderator] ---\n${output.finalSolution}\n\n--- Task ---\n${config.topic}`;
+    const validatorResult = await this.validator.execute(
+      `${taskId}_validation`,
+      'Validate Consensus',
+      '校验圆桌最终方案',
+      validationCandidate,
+      roundCtx,
+    );
+    const verdict = JSON.parse(validatorResult.output) as ValidatorOutput;
+    ctx.emit('validator:result', {
+      taskId,
+      agent: 'moderator',
+      pass: verdict.pass,
+      scores: verdict.scores,
+      failCodes: verdict.failCodes,
+      issues: verdict.issues,
+      reason: verdict.issues.length > 0 ? verdict.issues.join('; ') : undefined,
+    });
+    if (!verdict.pass) {
+      throw new Error(
+        `Validator 拦截圆桌最终方案: ${verdict.failCodes.join(', ') || 'UNKNOWN'} - ${verdict.issues.join('; ')}`,
+      );
+    }
 
     const consensus: RoundtableConsensus = {
       rounds: Math.max(...speeches.filter((s) => s.round > 0).map((s) => s.round), 0),

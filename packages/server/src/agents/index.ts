@@ -5,3 +5,4 @@ export { ResearchAgent } from './research';
 export { AnalystAgent } from './analyst';
 export { WriterAgent } from './writer';
 export { ModeratorAgent } from './moderator';
+export { ValidatorAgent } from './validator';

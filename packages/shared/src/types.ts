@@ -1,4 +1,10 @@
-export type AgentRole = 'data' | 'research' | 'analyst' | 'writer' | 'moderator';
+export type AgentRole =
+  | 'data'
+  | 'research'
+  | 'analyst'
+  | 'writer'
+  | 'moderator'
+  | 'validator';
 
 export type TaskStatus = 'pending' | 'running' | 'success' | 'failed' | 'rollback';
 
@@ -31,6 +37,7 @@ export interface AgentOutput {
 
 export interface ValidatorResult {
   taskId: string;
+  agent?: AgentRole;
   pass: boolean;
   scores: {
     accuracy: number;
@@ -38,6 +45,8 @@ export interface ValidatorResult {
     safety: number;
     format: number;
   };
+  failCodes?: ErrorType[];
+  issues?: string[];
   reason?: string;
 }
 

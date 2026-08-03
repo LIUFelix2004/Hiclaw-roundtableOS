@@ -49,6 +49,8 @@
 === Test 8: Skill Agents ===
 
 === Test 9: Roundtable Moderator ===
+
+=== Test 10: Validator Output Firewall ===
   PASS: E2E should return 4 results, got 4
   PASS: Every agent should produce non-empty output
   PASS: Every agent should report token usage
@@ -96,7 +98,16 @@
   PASS: risks should be non-empty
   PASS: roundtable:speech should be emitted
   PASS: roundtable:consensus should be emitted
+  PASS: validator:result should be emitted for final solution
   Roundtable: moderator engine passed
+  PASS: Validator should pass normal output
+  PASS: failCodes should be an array
+  PASS: Validator should reject FAIL_INJECT output
+  PASS: failCodes should be non-empty
+  PASS: Scheduler should stop with Validator interception, got: Validator 拦截 data 输出: DATA_ERROR, MODEL_ERROR - 注入失败：候选输出包含 FAIL_INJECT 标记，数据真实性存疑; 格式与完整性未达标
+  PASS: Scheduler should reject the injected task
+  PASS: validator:result should be emitted before interception
+  Validator: output firewall passed (pass + fail injection + scheduler interception)
 
 === All self-tests passed ===
 

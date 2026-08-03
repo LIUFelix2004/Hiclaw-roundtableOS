@@ -5,6 +5,8 @@ import { DataAgent } from './agents/data';
 import { ResearchAgent } from './agents/research';
 import { AnalystAgent } from './agents/analyst';
 import { WriterAgent } from './agents/writer';
+import { ValidatorAgent } from './agents/validator';
+import type { ValidatorOutput } from './agents/validator/schema';
 
 /**
  * TaskScheduler: executes SubTasks respecting their DAG dependencies.
@@ -14,6 +16,7 @@ import { WriterAgent } from './agents/writer';
  */
 export class TaskScheduler {
   private agents: Map<AgentRole, BaseAgent>;
+  private validatorAgent = new ValidatorAgent();
 
   constructor() {
     this.agents = new Map();
@@ -91,6 +94,11 @@ export class TaskScheduler {
         }),
       );
 
+      // Output firewall: every artifact passes Validator before entering DAG state.
+      for (const result of batchResults) {
+        await this.validateResult(result, userMessage, ctx);
+      }
+
       // Record results
       for (const result of batchResults) {
         completed.set(result.taskId, result.output);
@@ -108,5 +116,37 @@ export class TaskScheduler {
 
   getAgent(role: AgentRole): BaseAgent | undefined {
     return this.agents.get(role);
+  }
+
+  private async validateResult(
+    result: AgentResult,
+    userMessage: string,
+    ctx: ExecutionContext,
+  ): Promise<void> {
+    const candidate = `--- Output from [${result.role}] ---\n${result.output}\n\n--- Task ---\n${userMessage}`;
+    const vResult = await this.validatorAgent.execute(
+      `val_${result.taskId}`,
+      `Validate ${result.role}`,
+      `校验 ${result.role} 的输出`,
+      candidate,
+      ctx,
+    );
+    const verdict = JSON.parse(vResult.output) as ValidatorOutput;
+
+    ctx.emit('validator:result', {
+      taskId: result.taskId,
+      agent: result.role,
+      pass: verdict.pass,
+      scores: verdict.scores,
+      failCodes: verdict.failCodes,
+      issues: verdict.issues,
+      reason: verdict.issues.length > 0 ? verdict.issues.join('; ') : undefined,
+    });
+
+    if (!verdict.pass) {
+      throw new Error(
+        `Validator 拦截 ${result.role} 输出: ${verdict.failCodes.join(', ') || 'UNKNOWN'} - ${verdict.issues.join('; ')}`,
+      );
+    }
   }
 }

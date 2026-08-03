@@ -7,7 +7,7 @@
 import { Planner } from './planner';
 import { TaskScheduler } from './scheduler';
 import type { AgentRole, SubTask } from '@hermes/shared';
-import { AnalystAgent, DataAgent, ResearchAgent, WriterAgent } from './agents';
+import { AnalystAgent, DataAgent, ResearchAgent, ValidatorAgent, WriterAgent } from './agents';
 import type { SkillAgent } from './agents/skill-agent';
 import { RoundtableEngine } from './roundtable-engine';
 
@@ -256,8 +256,72 @@ async function testRoundtable(): Promise<void> {
   assert(Array.isArray(consensus.risks) && consensus.risks.length > 0, 'risks should be non-empty');
   assert(events.includes('roundtable:speech'), 'roundtable:speech should be emitted');
   assert(events.includes('roundtable:consensus'), 'roundtable:consensus should be emitted');
+  assert(events.includes('validator:result'), 'validator:result should be emitted for final solution');
 
   console.log('  Roundtable: moderator engine passed');
+}
+
+// ── Test 10: Validator Output Firewall ──
+console.log('\n=== Test 10: Validator Output Firewall ===');
+
+async function testValidator(): Promise<void> {
+  process.env.MOCK_LLM = '1';
+  const validator = new ValidatorAgent();
+  const events: string[] = [];
+  const ctx = {
+    socketId: 'self-test',
+    emit: (event: string) => {
+      events.push(event);
+    },
+  };
+
+  const good = await validator.execute(
+    'val-good',
+    'Validate writer',
+    '校验 writer 的输出',
+    '--- Output from [writer] ---\n{"title":"测试报告","summary":"摘要","sections":[],"keyMessages":[],"riskNote":"无","confidence":0.8}',
+    ctx as any,
+  );
+  const goodVerdict = JSON.parse(good.output);
+  assert(goodVerdict.pass === true, 'Validator should pass normal output');
+  assert(Array.isArray(goodVerdict.failCodes), 'failCodes should be an array');
+
+  const bad = await validator.execute(
+    'val-bad',
+    'Validate writer',
+    '校验 writer 的输出',
+    '--- Output from [writer] ---\nFAIL_INJECT 编造数据',
+    ctx as any,
+  );
+  const badVerdict = JSON.parse(bad.output);
+  assert(badVerdict.pass === false, 'Validator should reject FAIL_INJECT output');
+  assert(
+    Array.isArray(badVerdict.failCodes) && badVerdict.failCodes.length > 0,
+    'failCodes should be non-empty',
+  );
+
+  const failEvents: string[] = [];
+  const failCtx = {
+    socketId: 'self-test',
+    emit: (event: string) => {
+      failEvents.push(event);
+    },
+  };
+  const injectPlan = planner.plan('收集数据 FAIL_INJECT');
+  let rejected = false;
+  try {
+    await scheduler.execute(injectPlan.tasks, '收集数据 FAIL_INJECT', failCtx as any);
+  } catch (err: any) {
+    rejected = true;
+    assert(
+      String(err.message).includes('Validator 拦截'),
+      `Scheduler should stop with Validator interception, got: ${err.message}`,
+    );
+  }
+  assert(rejected, 'Scheduler should reject the injected task');
+  assert(failEvents.includes('validator:result'), 'validator:result should be emitted before interception');
+
+  console.log('  Validator: output firewall passed (pass + fail injection + scheduler interception)');
   console.log('\n=== All self-tests passed ===\n');
 }
 
@@ -265,6 +329,7 @@ testMockE2E()
   .then(testAnalystSkill)
   .then(testAllSkills)
   .then(testRoundtable)
+  .then(testValidator)
   .catch((err) => {
     console.error('FAIL: self-test error:', err);
     process.exit(1);

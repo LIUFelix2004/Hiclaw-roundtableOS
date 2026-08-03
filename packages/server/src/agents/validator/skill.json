@@ -1,0 +1,46 @@
+{
+  "name": "validator",
+  "version": "1.0.0",
+  "description": "输出防火墙 Skill：数据真实性、内容完整性、安全性、格式规范四维校验",
+  "taskType": "output-validation",
+  "complexity": "low",
+  "model": "auto",
+  "capabilities": [
+    "four-dimension-validation",
+    "fail-code-classification",
+    "security-scan",
+    "audit-compatible",
+    "rollback-compatible"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "taskId": { "type": "string" },
+      "task": { "type": "string" },
+      "inputData": {},
+      "previousResults": { "type": "array" },
+      "memory": {},
+      "snapshotId": { "type": "string" }
+    },
+    "required": ["taskId", "task"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "pass": { "type": "boolean" },
+      "scores": {
+        "type": "object",
+        "properties": {
+          "accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+          "completeness": { "type": "number", "minimum": 0, "maximum": 1 },
+          "safety": { "type": "number", "minimum": 0, "maximum": 1 },
+          "format": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "required": ["accuracy", "completeness", "safety", "format"]
+      },
+      "failCodes": { "type": "array" },
+      "issues": { "type": "array" }
+    },
+    "required": ["pass", "scores", "failCodes", "issues"]
+  }
+}

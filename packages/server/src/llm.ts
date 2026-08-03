@@ -12,6 +12,7 @@ const MODEL_MAP: Record<AgentRole, string> = {
   analyst: process.env.MODEL_ANALYST || 'gpt-4o',
   writer: process.env.MODEL_WRITER || 'gpt-4o',
   moderator: process.env.MODEL_MODERATOR || 'gpt-4o',
+  validator: process.env.MODEL_VALIDATOR || 'gpt-4o-mini',
 };
 
 export interface ChatOptions {
@@ -119,6 +120,22 @@ const MOCK_TEMPLATES: Record<AgentRole, (task: string) => string> = {
   "risks": ["储能补贴政策退坡", "光伏供给过剩持续", "Mock 演示数据口径限制"],
   "confidence": 0.8
 }`,
+  validator: (task) => {
+    const injected = task.includes('FAIL_INJECT');
+    return injected
+      ? `{
+  "pass": false,
+  "scores": {"accuracy": 0.2, "completeness": 0.5, "safety": 0.7, "format": 0.4},
+  "failCodes": ["DATA_ERROR", "MODEL_ERROR"],
+  "issues": ["注入失败：候选输出包含 FAIL_INJECT 标记，数据真实性存疑", "格式与完整性未达标"]
+}`
+      : `{
+  "pass": true,
+  "scores": {"accuracy": 0.96, "completeness": 0.94, "safety": 0.98, "format": 0.95},
+  "failCodes": [],
+  "issues": []
+}`;
+  },
 };
 
 function safeTopic(text: string): string {
