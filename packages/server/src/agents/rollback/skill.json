@@ -1,0 +1,41 @@
+{
+  "name": "rollback",
+  "version": "1.0.0",
+  "description": "故障自愈 Skill：快照恢复、模型切换、重跑与人工兜底决策",
+  "taskType": "fault-recovery",
+  "complexity": "low",
+  "model": "auto",
+  "capabilities": [
+    "snapshot-restore",
+    "model-switch",
+    "rerun",
+    "human-escalation",
+    "experience-memory-aware"
+  ],
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "taskId": { "type": "string" },
+      "task": { "type": "string" },
+      "inputData": {},
+      "previousResults": { "type": "array" },
+      "memory": {},
+      "snapshotId": { "type": "string" }
+    },
+    "required": ["taskId", "task"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "strategy": { "type": "string", "enum": ["snapshot_restore", "model_switch", "rerun", "human_escalation"] },
+      "reason": { "type": "string" },
+      "fromModel": { "type": "string" },
+      "toModel": { "type": ["string", "null"] },
+      "errorType": { "type": "string" },
+      "attempts": { "type": "number" },
+      "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+      "manualInstructions": { "type": ["string", "null"] }
+    },
+    "required": ["strategy", "reason", "fromModel", "toModel", "errorType", "attempts", "confidence"]
+  }
+}

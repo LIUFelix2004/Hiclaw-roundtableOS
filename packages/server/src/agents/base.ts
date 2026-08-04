@@ -92,13 +92,19 @@ export abstract class BaseAgent {
     throw new Error(message);
   }
 
-  protected emitStatus(taskId: string, status: 'pending' | 'running' | 'success' | 'failed' | 'rollback', progress: number, ctx: ExecutionContext) {
+  protected emitStatus(
+    taskId: string,
+    status: 'pending' | 'running' | 'success' | 'failed' | 'rollback',
+    progress: number,
+    ctx: ExecutionContext,
+    model: string = this.model,
+  ) {
     ctx.emit('agent:status', {
       taskId,
       agent: this.role,
       status,
       progress,
-      model: this.model,
+      model,
     });
   }
 

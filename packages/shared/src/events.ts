@@ -7,6 +7,9 @@ import type {
   AgentErrorInfo,
   ValidatorResult,
   RollbackEvent,
+  RollbackResult,
+  RollbackHumanEscalation,
+  ExperienceRecord,
   RoundtableConfig,
   RoundtableSpeech,
   RoundtableConsensus,
@@ -27,6 +30,9 @@ export interface ServerToClientEvents {
   'agent:error': (data: AgentErrorInfo) => void;
   'validator:result': (data: ValidatorResult) => void;
   'rollback:start': (data: RollbackEvent) => void;
+  'rollback:complete': (data: RollbackResult) => void;
+  'rollback:human': (data: RollbackHumanEscalation) => void;
+  'memory:updated': (data: ExperienceRecord) => void;
   'roundtable:speech': (data: RoundtableSpeech) => void;
   'roundtable:consensus': (data: RoundtableConsensus) => void;
   'error': (data: { message: string }) => void;

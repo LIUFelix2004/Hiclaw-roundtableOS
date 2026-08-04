@@ -15,20 +15,45 @@ import type { ExecutionContext } from './types';
 import { isMockEnabled } from './llm';
 import { RoundtableEngine } from './roundtable-engine';
 import type { SkillAgent } from './agents/skill-agent';
+import { statsService } from './stats';
+import { NEW_ENERGY_PROMPTS, NEW_ENERGY_DATASET } from './demo/new-energy';
 
 const app = new Koa();
 app.use(cors());
 
-// Health endpoint for ops checks and demo probes.
 app.use(async (ctx, next) => {
-  if (ctx.method === 'GET' && ctx.path === '/health') {
-    ctx.body = {
-      status: 'ok',
-      service: 'hermes-agentos-server',
-      mock: isMockEnabled(),
-      uptime: process.uptime(),
-    };
-    return;
+  if (ctx.method === 'GET') {
+    switch (ctx.path) {
+      case '/health':
+        ctx.body = {
+          status: 'ok',
+          service: 'hermes-agentos-server',
+          mock: isMockEnabled(),
+          uptime: process.uptime(),
+        };
+        return;
+      case '/api/stats/tokens':
+        ctx.body = statsService.getTokens();
+        return;
+      case '/api/stats/cost':
+        ctx.body = statsService.getCost();
+        return;
+      case '/api/stats/health':
+        ctx.body = statsService.getHealth({
+          activeTasks: activeTasks.size,
+          activeRoundtables: activeRoundtables.size,
+        });
+        return;
+      case '/api/stats/roundtable':
+        ctx.body = statsService.getRoundtable();
+        return;
+      case '/api/demo':
+        ctx.body = {
+          prompts: NEW_ENERGY_PROMPTS,
+          dataset: NEW_ENERGY_DATASET,
+        };
+        return;
+    }
   }
   await next();
 });
@@ -61,6 +86,9 @@ io.on('connection', (socket: Socket) => {
 
     // Prevent duplicate
     if (activeTasks.has(socket.id)) {
+      statsService.observe('error', {
+        message: 'A task is already running for this connection.',
+      });
       socket.emit('error', {
         message: `A task is already running for this connection. Wait for it to complete.`,
       });
@@ -73,6 +101,7 @@ io.on('connection', (socket: Socket) => {
     const ctx: ExecutionContext = {
       socketId: socket.id,
       emit: (event, payload) => {
+        statsService.observe(event, payload);
         (socket as any).emit(event, payload);
       },
     };
@@ -102,6 +131,7 @@ io.on('connection', (socket: Socket) => {
       });
     } catch (err: any) {
       console.error(`[task:create] error:`, err);
+      statsService.observe('error', { message: err?.message ?? String(err) });
       socket.emit('error', { message: `Task failed: ${err.message}` });
     } finally {
       activeTasks.delete(socket.id);
@@ -113,6 +143,9 @@ io.on('connection', (socket: Socket) => {
     console.log(`[roundtable:start] topic: ${data.topic}`);
 
     if (activeRoundtables.has(socket.id)) {
+      statsService.observe('error', {
+        message: 'A roundtable is already running for this connection.',
+      });
       socket.emit('error', {
         message: 'A roundtable is already running for this connection.',
       });
@@ -123,6 +156,7 @@ io.on('connection', (socket: Socket) => {
     const ctx: ExecutionContext = {
       socketId: socket.id,
       emit: (event, payload) => {
+        statsService.observe(event, payload);
         (socket as any).emit(event, payload);
       },
     };
@@ -131,6 +165,7 @@ io.on('connection', (socket: Socket) => {
       await roundtableEngine.start(data, ctx);
     } catch (err: any) {
       console.error(`[roundtable:start] error:`, err);
+      statsService.observe('error', { message: err?.message ?? String(err) });
       socket.emit('error', { message: `Roundtable failed: ${err.message}` });
     } finally {
       activeRoundtables.delete(socket.id);

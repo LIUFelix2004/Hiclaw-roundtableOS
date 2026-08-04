@@ -29,6 +29,7 @@ export interface AgentResult {
   tokens: number;
   cost: number;
   duration: number;
+  model?: string;
 }
 
 /**

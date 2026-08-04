@@ -6,3 +6,4 @@ export { AnalystAgent } from './analyst';
 export { WriterAgent } from './writer';
 export { ModeratorAgent } from './moderator';
 export { ValidatorAgent } from './validator';
+export { RollbackAgent } from './rollback';

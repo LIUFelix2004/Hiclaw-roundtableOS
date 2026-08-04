@@ -10,6 +10,16 @@ import type { AgentRole, SubTask } from '@hermes/shared';
 import { AnalystAgent, DataAgent, ResearchAgent, ValidatorAgent, WriterAgent } from './agents';
 import type { SkillAgent } from './agents/skill-agent';
 import { RoundtableEngine } from './roundtable-engine';
+import { experienceMemory } from './experience-memory';
+import { snapshotStore } from './snapshot-store';
+import { RollbackEngine } from './rollback-engine';
+import { statsService } from './stats';
+import { NEW_ENERGY_PROMPTS, NEW_ENERGY_DATASET } from './demo/new-energy';
+import os from 'os';
+import path from 'path';
+
+process.env.MOCK_LLM = '1';
+process.env.HERMES_DATA_DIR = path.join(os.tmpdir(), `hermes-self-test-${Date.now()}`);
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -322,6 +332,205 @@ async function testValidator(): Promise<void> {
   assert(failEvents.includes('validator:result'), 'validator:result should be emitted before interception');
 
   console.log('  Validator: output firewall passed (pass + fail injection + scheduler interception)');
+}
+
+// ── Test 11: Experience Memory ──
+console.log('\n=== Test 11: Experience Memory ===');
+
+async function testExperienceMemory(): Promise<void> {
+  process.env.MOCK_LLM = '1';
+  experienceMemory.clear();
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o', success: true });
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o', success: false });
+
+  const stats = experienceMemory.stats();
+  assert(stats.total === 2, `memory total should be 2, got ${stats.total}`);
+  assert(stats.success === 1 && stats.failure === 1, 'memory should have 1 success and 1 failure');
+  assert(
+    experienceMemory.pickModel('analyst', 'analysis') === 'gpt-4o',
+    'memory should still pick gpt-4o after a 50% rate when it is the only tried model',
+  );
+
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o-mini', success: true });
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o-mini', success: true });
+  assert(
+    experienceMemory.pickModel('analyst', 'analysis') === 'gpt-4o-mini',
+    'memory should switch to gpt-4o-mini after 100% success',
+  );
+  assert(
+    experienceMemory.pickFallback('analyst', 'gpt-4o-mini')[0] === 'gpt-4o',
+    'fallback order should prefer the remaining tried model',
+  );
+
+  console.log('  Experience Memory: JSON persistence + model selection passed');
+}
+
+// ── Test 12: Rollback Engine ──
+console.log('\n=== Test 12: Rollback Engine ===');
+
+async function testRollbackEngine(): Promise<void> {
+  process.env.MOCK_LLM = '1';
+  snapshotStore.clear();
+
+  const events: string[] = [];
+  const ctx = {
+    socketId: 'self-test',
+    emit: (event: string) => {
+      events.push(event);
+    },
+  };
+  snapshotStore.save({
+    snapshotId: 'snap-restore',
+    taskId: 'rb-snap',
+    agent: 'analyst',
+    timestamp: Date.now(),
+    input: { taskId: 'rb-snap', task: '分析' },
+    output: { summary: 'restored output' },
+    model: 'gpt-4o',
+    status: 'success',
+  } as any);
+
+  const engine = new RollbackEngine();
+  const outcome = await engine.recoverAgent({
+    taskId: 'rb-snap',
+    taskTitle: 'Analyze',
+    role: 'analyst',
+    errorType: 'MODEL_ERROR',
+    fromModel: 'gpt-4o',
+    input: '分析',
+    context: '--- Output from [data] ---\n{}',
+    agent: new AnalystAgent(),
+    ctx: ctx as any,
+    failureMessage: 'timeout',
+  });
+  assert(outcome.recovered, 'snapshot restore should recover the task');
+  assert(outcome.strategy === 'snapshot_restore', `strategy should be snapshot_restore, got ${outcome.strategy}`);
+  assert(outcome.result?.output.includes('restored output') === true, 'restored output should come from the snapshot');
+  assert(events.includes('rollback:start') && events.includes('rollback:complete'), 'rollback events should be emitted');
+
+  snapshotStore.clear();
+  const switchEvents: string[] = [];
+  const switchCtx = {
+    socketId: 'self-test',
+    emit: (event: string) => {
+      switchEvents.push(event);
+    },
+  };
+  const flakyAgent = {
+    role: 'analyst',
+    model: 'auto',
+    execute: async (
+      _taskId: string,
+      _title: string,
+      _input: string,
+      _context: string,
+      _execCtx: unknown,
+      modelOverride?: string,
+    ) => {
+      if (modelOverride === 'gpt-4o-mini') {
+        return {
+          taskId: 'rb-switch',
+          role: 'analyst',
+          output: '{"summary":"recovered by fallback"}',
+          tokens: 10,
+          cost: 0.001,
+          duration: 10,
+          model: 'gpt-4o-mini',
+        };
+      }
+      throw new Error('model failed');
+    },
+  } as any;
+
+  const outcome2 = await engine.recoverAgent({
+    taskId: 'rb-switch',
+    taskTitle: 'Analyze',
+    role: 'analyst',
+    errorType: 'MODEL_ERROR',
+    fromModel: 'gpt-4o',
+    input: '分析',
+    context: '--- Output from [data] ---\n{}',
+    agent: flakyAgent,
+    ctx: switchCtx as any,
+    failureMessage: 'model failed',
+  });
+  assert(outcome2.recovered, 'model switch should recover the task');
+  assert(outcome2.result?.model === 'gpt-4o-mini', 'recovered result should use the fallback model');
+  assert(outcome2.toModel === 'gpt-4o-mini', 'outcome should report the fallback model');
+
+  console.log('  Rollback Engine: snapshot restore + model switch passed');
+}
+
+// ── Test 13: Dashboard Stats ──
+console.log('\n=== Test 13: Dashboard Stats ===');
+
+async function testStats(): Promise<void> {
+  statsService.reset();
+  statsService.observe('agent:output', {
+    taskId: 't1',
+    agent: 'analyst',
+    tokens: 120,
+    cost: 0.001,
+    model: 'gpt-4o',
+  });
+  statsService.observe('agent:output', {
+    taskId: 't2',
+    agent: 'data',
+    tokens: 80,
+    cost: 0.0005,
+    model: 'gpt-4o-mini',
+  });
+  statsService.observe('rollback:complete', { taskId: 't3', recovered: true });
+  statsService.observe('roundtable:consensus', { topic: '新能源圆桌', rounds: 2, finalAnswer: 'x' });
+
+  const tokens = statsService.getTokens();
+  assert(tokens.total === 200, `token total should be 200, got ${tokens.total}`);
+  assert(tokens.byAgent.analyst === 120, 'token byAgent should track analyst');
+  assert(tokens.byAgent.data === 80, 'token byAgent should track data');
+
+  const cost = statsService.getCost();
+  assert(Math.abs(cost.total - 0.0015) < 1e-9, `cost total should be 0.0015, got ${cost.total}`);
+  assert(Math.abs(cost.byModel['gpt-4o'] - 0.001) < 1e-9, 'cost byModel should track gpt-4o');
+
+  const roundtable = statsService.getRoundtable();
+  assert(roundtable.total === 1 && roundtable.rounds === 2, 'roundtable stats should track count and rounds');
+
+  const health = statsService.getHealth({ activeTasks: 1, activeRoundtables: 0 });
+  assert(health.rollbackRecovered === 1 && health.status === 'ok', 'health should track rollback recovery');
+  assert(health.activeTasks === 1 && health.activeRoundtables === 0, 'health should include active counts');
+
+  console.log('  Dashboard Stats: tokens/cost/health/roundtable passed');
+}
+
+// ── Test 14: New Energy Demo Data ──
+console.log('\n=== Test 14: New Energy Demo Data ===');
+
+async function testDemoData(): Promise<void> {
+  assert(NEW_ENERGY_PROMPTS.length >= 3, 'Should ship at least 3 demo prompts');
+  assert(
+    NEW_ENERGY_PROMPTS.some((p) => p.prompt.includes('储能') && p.prompt.includes('光伏')),
+    'Prompts should cover the new energy lines',
+  );
+  assert(NEW_ENERGY_DATASET.storage.gwh === 42.6, 'Storage preset should be 42.6 GWh');
+  assert(NEW_ENERGY_DATASET.ev.penetration === 0.547, 'EV penetration preset should be 0.547');
+
+  const ctx = {
+    socketId: 'self-test',
+    emit: () => {},
+  };
+  const dataAgent = new DataAgent();
+  const result = await dataAgent.execute(
+    'demo-data',
+    'Gather Data',
+    '新能源战略分析：储能、光伏、新能源车',
+    '--- Output from [] ---\n{}',
+    ctx as any,
+  );
+  const parsed = JSON.parse(result.output);
+  assert(parsed.summary.includes('储能'), 'Data mock should use the new energy dataset');
+  assert(Array.isArray(parsed.dataPoints) && parsed.dataPoints.length >= 4, 'Data mock should include 4 data points');
+
+  console.log('  Demo Data: new energy prompts + preset + mock coherence passed');
   console.log('\n=== All self-tests passed ===\n');
 }
 
@@ -330,6 +539,10 @@ testMockE2E()
   .then(testAllSkills)
   .then(testRoundtable)
   .then(testValidator)
+  .then(testExperienceMemory)
+  .then(testRollbackEngine)
+  .then(testStats)
+  .then(testDemoData)
   .catch((err) => {
     console.error('FAIL: self-test error:', err);
     process.exit(1);

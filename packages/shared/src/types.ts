@@ -4,7 +4,8 @@ export type AgentRole =
   | 'analyst'
   | 'writer'
   | 'moderator'
-  | 'validator';
+  | 'validator'
+  | 'rollback';
 
 export type TaskStatus = 'pending' | 'running' | 'success' | 'failed' | 'rollback';
 
@@ -33,6 +34,7 @@ export interface AgentOutput {
   tokens: number;
   cost: number;
   duration: number;
+  model?: string;
 }
 
 export interface ValidatorResult {
@@ -55,6 +57,33 @@ export interface RollbackEvent {
   errorType: ErrorType;
   fromModel: string;
   toModel: string;
+}
+
+export type RollbackStrategy =
+  | 'snapshot_restore'
+  | 'model_switch'
+  | 'rerun'
+  | 'human_escalation';
+
+export interface RollbackResult {
+  taskId: string;
+  agent: AgentRole;
+  errorType: ErrorType;
+  fromModel: string;
+  toModel: string;
+  strategy: RollbackStrategy;
+  recovered: boolean;
+  attempts: number;
+  reason: string;
+  duration: number;
+}
+
+export interface RollbackHumanEscalation {
+  taskId: string;
+  agent: AgentRole;
+  errorType: ErrorType;
+  message: string;
+  instructions: string;
 }
 
 export interface RoundtableConfig {
@@ -143,6 +172,7 @@ export interface AgentTraceRecord {
 
 export interface AgentSnapshot {
   snapshotId: string;
+  taskId: string;
   agent: AgentRole;
   timestamp: number;
   input: unknown;

@@ -1,5 +1,7 @@
 import { BaseAgent } from './base';
 import { chat } from '../llm';
+import { experienceMemory, type ExperienceRecordInput } from '../experience-memory';
+import { snapshotStore } from '../snapshot-store';
 import type {
   AgentConfig,
   AgentContext,
@@ -59,10 +61,12 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
     input: string,
     context: string,
     ctx: ExecutionContext,
+    modelOverride?: string,
   ): Promise<AgentResult> {
     const startTime = Date.now();
     const traceId = `trace_${taskId}_${Date.now()}`;
     const snapshotId = `snap_${taskId}_${Date.now()}`;
+    const selectedModel = modelOverride ?? experienceMemory.pickModel(this.role, this.skill.taskType);
 
     const agentContext: AgentContext = {
       taskId,
@@ -74,20 +78,30 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
       traceId,
     };
 
-    this.emitStatus(taskId, 'running', 0, ctx);
+    this.emitStatus(taskId, 'running', 0, ctx, selectedModel);
     this.emitTrace(ctx, {
       traceId,
       agent: this.role,
-      model: 'auto',
+      model: selectedModel,
       status: 'running',
       phase: 'START',
     });
     this.emitSnapshot(ctx, {
       snapshotId,
+      taskId,
       agent: this.role,
       timestamp: Date.now(),
       input: agentContext,
-      model: 'auto',
+      model: selectedModel,
+      status: 'running',
+    });
+    snapshotStore.save({
+      snapshotId,
+      taskId,
+      agent: this.role,
+      timestamp: Date.now(),
+      input: agentContext,
+      model: selectedModel,
       status: 'running',
     });
 
@@ -95,14 +109,14 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
     this.emitTrace(ctx, {
       traceId,
       agent: this.role,
-      model: 'auto',
+      model: selectedModel,
       status: 'running',
       phase: 'CONTEXT_BUILD',
     });
     this.emitTrace(ctx, {
       traceId,
       agent: this.role,
-      model: 'auto',
+      model: selectedModel,
       status: 'running',
       phase: 'MODEL_SELECTED',
     });
@@ -114,6 +128,7 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
       try {
         const result = await chat({
           role: this.role,
+          model: selectedModel,
           systemPrompt: this.config.systemPrompt,
           messages: [{ role: 'user', content: prompt }],
           temperature: this.config.temperature,
@@ -162,11 +177,23 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           tokens: result.tokens,
           cost: result.cost,
           duration,
+          model: result.model,
         };
         ctx.emit('agent:output', output);
 
         this.emitSnapshot(ctx, {
           snapshotId,
+          taskId,
+          agent: this.role,
+          timestamp: Date.now(),
+          input: agentContext,
+          output: validOutput,
+          model: result.model,
+          status: 'success',
+        });
+        snapshotStore.save({
+          snapshotId,
+          taskId,
           agent: this.role,
           timestamp: Date.now(),
           input: agentContext,
@@ -184,7 +211,13 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           status: 'success',
           phase: 'SUCCESS',
         });
-        this.emitStatus(taskId, 'success', 100, ctx);
+        this.emitStatus(taskId, 'success', 100, ctx, result.model);
+        await this.recordExperience(ctx, {
+          taskType: this.skill.taskType,
+          agent: this.role,
+          model: result.model,
+          success: true,
+        });
 
         return {
           taskId,
@@ -193,25 +226,38 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           tokens: result.tokens,
           cost: result.cost,
           duration,
+          model: result.model,
         };
       } catch (err: any) {
+        err.model = selectedModel;
         lastError = err;
         const errorType = classifyError(err);
         const errorMessage = `${errorType}: ${err?.message ?? err}`;
 
         this.emitSnapshot(ctx, {
           snapshotId,
+          taskId,
           agent: this.role,
           timestamp: Date.now(),
           input: agentContext,
-          model: this.model,
+          model: selectedModel,
+          status: 'failed',
+          error: { errorType, message: err?.message ?? String(err) },
+        });
+        snapshotStore.save({
+          snapshotId,
+          taskId,
+          agent: this.role,
+          timestamp: Date.now(),
+          input: agentContext,
+          model: selectedModel,
           status: 'failed',
           error: { errorType, message: err?.message ?? String(err) },
         });
         this.emitTrace(ctx, {
           traceId,
           agent: this.role,
-          model: this.model,
+          model: selectedModel,
           status: 'failed',
           phase: 'FAIL',
           attempt,
@@ -223,7 +269,7 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           `[${this.role}] attempt ${attempt}/${attempts} failed: ${errorMessage} (retry in ${waitMs}ms)`,
         );
         if (attempt < attempts) {
-          this.emitStatus(taskId, 'running', Math.round((attempt / attempts) * 80), ctx);
+          this.emitStatus(taskId, 'running', Math.round((attempt / attempts) * 80), ctx, selectedModel);
           await sleep(waitMs);
         }
       }
@@ -231,6 +277,13 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
 
     const errorType = classifyError(lastError);
     const message = `${this.role} 在 ${attempts} 次尝试后失败 [${errorType}]: ${(lastError as any)?.message ?? lastError}`;
+    await this.recordExperience(ctx, {
+      taskType: this.skill.taskType,
+      agent: this.role,
+      model: selectedModel,
+      success: false,
+      failReason: message,
+    });
     const errorInfo: AgentErrorInfo = {
       taskId,
       agent: this.role,
@@ -240,6 +293,18 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
     this.emitStatus(taskId, 'failed', 0, ctx);
     ctx.emit('agent:error', errorInfo);
     throw new Error(message);
+  }
+
+  private async recordExperience(
+    ctx: ExecutionContext,
+    input: ExperienceRecordInput,
+  ): Promise<void> {
+    try {
+      const record = await experienceMemory.record(input);
+      ctx.emit('memory:updated', record);
+    } catch (err: any) {
+      console.warn(`[experience-memory] 写入失败: ${err?.message ?? err}`);
+    }
   }
 }
 

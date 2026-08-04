@@ -10,3 +10,4 @@ Thumbs.db
 .turbo/
 coverage/
 *.pdf
+packages/server/data/

@@ -6,11 +6,14 @@ import type {
   RoundtableTask,
 } from '@hermes/shared';
 import type { ExecutionContext } from './types';
+import type { AgentResult } from './types';
 import type { SkillAgent } from './agents/skill-agent';
+import { classifyError } from './agents/skill-agent';
 import { ModeratorAgent } from './agents/moderator';
 import type { ModeratorOutput } from './agents/moderator/schema';
 import { ValidatorAgent } from './agents/validator';
 import type { ValidatorOutput } from './agents/validator/schema';
+import { RollbackEngine } from './rollback-engine';
 
 const DEFAULT_PARTICIPANTS: AgentRole[] = ['data', 'research', 'analyst', 'writer'];
 
@@ -24,6 +27,7 @@ const DEFAULT_PARTICIPANTS: AgentRole[] = ['data', 'research', 'analyst', 'write
 export class RoundtableEngine {
   private moderator = new ModeratorAgent();
   private validator = new ValidatorAgent();
+  private rollbackEngine = new RollbackEngine();
 
   constructor(private participants: Map<AgentRole, SkillAgent<any>>) {}
 
@@ -52,18 +56,37 @@ export class RoundtableEngine {
         const stance: RoundtableSpeech['stance'] =
           round === 1 ? 'propose' : round === 2 ? (index % 2 === 0 ? 'challenge' : 'supplement') : 'supplement';
         const transcript = this.buildTranscript(speeches);
-        const result = await agent.execute(
-          `${taskId}_r${round}_${role}`,
-          `Round ${round} - ${role}`,
-          config.topic,
-          transcript,
-          roundCtx,
-        );
+        const taskIdWithRole = `${taskId}_r${round}_${role}`;
+        let result: AgentResult;
+        try {
+          result = await agent.execute(
+            taskIdWithRole,
+            `Round ${round} - ${role}`,
+            config.topic,
+            transcript,
+            roundCtx,
+          );
+        } catch (err: any) {
+          const outcome = await this.rollbackEngine.recoverAgent({
+            taskId: taskIdWithRole,
+            taskTitle: `Round ${round} - ${role}`,
+            role,
+            errorType: (err as any).errorType ?? classifyError(err),
+            fromModel: (err as any).model ?? agent.model,
+            input: config.topic,
+            context: transcript,
+            agent,
+            ctx: roundCtx,
+            failureMessage: err?.message ?? String(err),
+          });
+          if (!outcome.recovered || !outcome.result) throw err;
+          result = outcome.result;
+        }
 
         const speech: RoundtableSpeech = {
           round,
           agent: role,
-          model: agent.model,
+          model: result.model ?? agent.model,
           content: result.output.length > 2000 ? `${result.output.slice(0, 2000)}...` : result.output,
           stance,
         };
@@ -87,29 +110,13 @@ export class RoundtableEngine {
 
     // Output firewall: the final solution must pass Validator before consensus
     // is published. failCodes are aligned with ErrorType for Rollback.
-    const validationCandidate = `--- Output from [moderator] ---\n${output.finalSolution}\n\n--- Task ---\n${config.topic}`;
-    const validatorResult = await this.validator.execute(
-      `${taskId}_validation`,
-      'Validate Consensus',
-      '校验圆桌最终方案',
-      validationCandidate,
+    await this.validateConsensus(
+      taskId,
+      config.topic,
+      transcriptContext,
+      moderatorResult,
       roundCtx,
     );
-    const verdict = JSON.parse(validatorResult.output) as ValidatorOutput;
-    ctx.emit('validator:result', {
-      taskId,
-      agent: 'moderator',
-      pass: verdict.pass,
-      scores: verdict.scores,
-      failCodes: verdict.failCodes,
-      issues: verdict.issues,
-      reason: verdict.issues.length > 0 ? verdict.issues.join('; ') : undefined,
-    });
-    if (!verdict.pass) {
-      throw new Error(
-        `Validator 拦截圆桌最终方案: ${verdict.failCodes.join(', ') || 'UNKNOWN'} - ${verdict.issues.join('; ')}`,
-      );
-    }
 
     const consensus: RoundtableConsensus = {
       rounds: Math.max(...speeches.filter((s) => s.round > 0).map((s) => s.round), 0),
@@ -139,6 +146,62 @@ export class RoundtableEngine {
       .join('\n\n')}`;
   }
 
+  private async validateConsensus(
+    taskId: string,
+    topic: string,
+    transcriptContext: string,
+    moderatorResult: AgentResult,
+    roundCtx: ExecutionContext,
+  ): Promise<void> {
+    const maxRecoveries = 5;
+    let current = moderatorResult;
+    for (let attempt = 0; attempt < maxRecoveries; attempt++) {
+      const validationCandidate = `--- Output from [moderator] ---\n${current.output}\n\n--- Task ---\n${topic}`;
+      const validatorResult = await this.validator.execute(
+        `${taskId}_validation`,
+        'Validate Consensus',
+        '校验圆桌最终方案',
+        validationCandidate,
+        roundCtx,
+      );
+      const verdict = JSON.parse(validatorResult.output) as ValidatorOutput;
+      roundCtx.emit('validator:result', {
+        taskId,
+        agent: 'moderator',
+        pass: verdict.pass,
+        scores: verdict.scores,
+        failCodes: verdict.failCodes,
+        issues: verdict.issues,
+        reason: verdict.issues.length > 0 ? verdict.issues.join('; ') : undefined,
+      });
+      if (verdict.pass) return;
+
+      if (attempt === maxRecoveries - 1) {
+        throw new Error(
+          `Validator 拦截圆桌最终方案: ${verdict.failCodes.join(', ') || 'UNKNOWN'} - ${verdict.issues.join('; ')}`,
+        );
+      }
+      const outcome = await this.rollbackEngine.recoverValidation({
+        taskId: `${taskId}_synthesis`,
+        taskTitle: 'Roundtable Synthesis',
+        role: 'moderator',
+        errorType: verdict.failCodes[0] ?? 'POLICY_ERROR',
+        fromModel: current.model ?? this.moderator.model,
+        input: topic,
+        context: transcriptContext,
+        agent: this.moderator,
+        ctx: roundCtx,
+        failureMessage: verdict.issues.join('; '),
+      });
+      if (!outcome.recovered || !outcome.result) {
+        throw new Error(
+          `Validator 拦截圆桌最终方案: ${verdict.failCodes.join(', ') || 'UNKNOWN'} - ${verdict.issues.join('; ')}`,
+        );
+      }
+      current = outcome.result;
+    }
+  }
+
   /**
    * Let participant executions produce Trace/Snapshot/error events without
    * spamming the roundtable UI with agent:status / agent:output events.
@@ -149,6 +212,9 @@ export class RoundtableEngine {
       emit: (event, payload) => {
         if (
           event.startsWith('roundtable:') ||
+          event.startsWith('rollback:') ||
+          event === 'memory:updated' ||
+          event === 'validator:result' ||
           event === 'agent:trace' ||
           event === 'agent:snapshot' ||
           event === 'agent:error'
