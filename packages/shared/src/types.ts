@@ -48,6 +48,22 @@ export interface RollbackEvent {
   toModel: string;
 }
 
+export type RollbackStrategy = 'snapshot_restore' | 'model_switch' | 'rerun' | 'human_escalation';
+
+export interface RollbackCompleteEvent {
+  taskId: string;
+  strategy: RollbackStrategy;
+  result: string;
+  fromModel?: string;
+  toModel?: string;
+}
+
+export interface RollbackHumanEvent {
+  taskId: string;
+  reason: string;
+  context?: string;
+}
+
 export interface RoundtableConfig {
   topic: string;
   agents: AgentRole[];
@@ -59,7 +75,7 @@ export interface RoundtableSpeech {
   agent: AgentRole;
   model: string;
   content: string;
-  stance: 'propose' | 'agree' | 'challenge' | 'supplement';
+  stance: 'propose' | 'agree' | 'challenge' | 'supplement' | 'moderate' | 'synthesize';
 }
 
 export interface RoundtableConsensus {
@@ -67,6 +83,8 @@ export interface RoundtableConsensus {
   finalAnswer: string;
   agreements: string[];
   disagreements: string[];
+  tasks?: { agent: AgentRole; target: string; input: string; expectedOutput: string }[];
+  risks?: string[];
 }
 
 export interface ExperienceRecord {
@@ -90,4 +108,12 @@ export interface TraceSpan {
   tokens?: number;
   cost?: number;
   status: TaskStatus;
+}
+
+export interface AgentSnapshot {
+  id: string;
+  taskId: string;
+  label: string;
+  timestamp: number;
+  data: Record<string, unknown>;
 }
