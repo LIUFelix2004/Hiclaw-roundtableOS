@@ -109,15 +109,15 @@ function CanvasInner() {
   };
 
   const respondToRollback = (action: 'approve' | 'dismiss') => { if (humanRollback) emit('rollback:respond', { taskId: humanRollback.taskId, action }); setHumanRollback(null); };
-  return <div ref={canvasRef} className="relative h-full min-h-[32rem] bg-zinc-50 dark:bg-zinc-950">
+  return <div ref={canvasRef} className="relative h-full min-h-[32rem]" style={{ background: 'var(--bg-primary)' }}>
     <RollbackNotice started={rollbackStarted} completed={rollbackCompleted} />
     <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onNodeClick={(_, node) => setSelectedTaskId(node.id)} fitView proOptions={{ hideAttribution: true }}>
-      <Background gap={24} size={1} color="#94a3b8" />
+      <Background gap={24} size={1} color="var(--border-light)" />
       <Controls showInteractive={false} />
-      <MiniMap nodeColor={(node) => { const status = (node.data as SubTask | undefined)?.status; return status === 'success' ? '#22c55e' : status === 'failed' ? '#ef4444' : status === 'running' ? '#3b82f6' : '#94a3b8'; }} />
-      <Panel position="top-left"><div className="rounded-lg border border-zinc-200 bg-white/95 p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/95"><p className="text-sm font-semibold">DAG Canvas</p><p className="text-xs text-zinc-500">{tasks.length ? `${tasks.length} tasks - live status` : 'Waiting for task plan...'}</p><div className="mt-2 flex gap-1"><Button variant="outline" size="sm" onClick={() => zoomOut()} aria-label="Zoom out">-</Button><Button variant="outline" size="sm" onClick={() => zoomIn()} aria-label="Zoom in">+</Button><Button variant="outline" size="sm" onClick={() => fitView({ padding: 0.2 })}>Fit</Button><Button variant="outline" size="sm" onClick={() => void saveImage()}>Screenshot</Button></div></div></Panel>
+      <MiniMap nodeColor={(node) => { const status = (node.data as SubTask | undefined)?.status; return status === 'success' ? '#2e7d32' : status === 'failed' ? '#c62828' : status === 'running' ? '#4a90d9' : '#888888'; }} />
+      <Panel position="top-left"><div className="rounded-lg border p-3" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: 'var(--radius-md)' }}><p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>DAG Canvas</p><p className="text-xs" style={{ color: 'var(--text-muted)' }}>{tasks.length ? `${tasks.length} tasks - live status` : 'Waiting for task plan...'}</p><div className="mt-2 flex gap-1"><Button variant="outline" size="sm" onClick={() => zoomOut()} aria-label="Zoom out">-</Button><Button variant="outline" size="sm" onClick={() => zoomIn()} aria-label="Zoom in">+</Button><Button variant="outline" size="sm" onClick={() => fitView({ padding: 0.2 })}>Fit</Button><Button variant="outline" size="sm" onClick={() => void saveImage()}>Screenshot</Button></div></div></Panel>
     </ReactFlow>
-    {!tasks.length && <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><Card className="max-w-sm bg-white/90 dark:bg-zinc-900/90"><CardHeader><CardTitle>No task graph yet</CardTitle><CardDescription>Send a task in Dialogue Center to generate the agent dependency graph.</CardDescription></CardHeader></Card></div>}
+    {!tasks.length && <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><div className="max-w-sm rounded-lg border p-6 text-center" style={{ background: 'var(--bg-card)', borderColor: 'var(--border-color)', borderRadius: 'var(--radius-md)' }}><h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>No task graph yet</h3><p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>Send a task in Dialogue Center to generate the agent dependency graph.</p></div></div>}
     {selectedTaskId && <TracePanel taskId={selectedTaskId} spans={traceByTask[selectedTaskId] ?? []} snapshots={snapshotsByTask[selectedTaskId] ?? []} onClose={() => setSelectedTaskId(null)} />}
     <RollbackHumanDialog event={humanRollback} onRespond={respondToRollback} />
   </div>;

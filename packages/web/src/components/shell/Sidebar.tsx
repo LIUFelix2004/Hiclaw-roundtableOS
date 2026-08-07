@@ -2,9 +2,8 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Bot, BrainCircuit, ChevronLeft, LayoutDashboard, MessageSquare, Network, PanelLeft } from 'lucide-react';
+import { Bot, BrainCircuit, ChevronLeft, LayoutDashboard, MessageSquare, Network, PanelLeft, Settings } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -27,35 +26,78 @@ export function Sidebar({ currentView, onViewChange, isConnected }: SidebarProps
   }, []);
 
   return (
-    <motion.aside initial={false} animate={{ width: collapsed ? 72 : 256 }} transition={{ duration: 0.2, ease: 'easeOut' }} className="flex h-full shrink-0 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <div className={cn('flex h-16 items-center border-b border-zinc-200 dark:border-zinc-800', collapsed ? 'justify-center px-2' : 'justify-between px-4')}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button type="button" onClick={() => setCollapsed((value) => !value)} className="flex min-w-0 items-center gap-2 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"><Bot className="h-4 w-4" /></span>
-              {!collapsed && <span className="truncate text-sm font-semibold tracking-tight">Hermes AgentOS</span>}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{collapsed ? 'Expand sidebar' : 'Collapse sidebar'}</TooltipContent>
-        </Tooltip>
-        {!collapsed && <Button variant="ghost" size="icon" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar"><ChevronLeft className="h-4 w-4" /></Button>}
+    <motion.aside
+      initial={false}
+      animate={{ width: collapsed ? 64 : 240 }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+      className="flex h-full shrink-0 flex-col border-r"
+      style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border-color)' }}
+    >
+      {/* Header */}
+      <div className={cn('flex items-center border-b', collapsed ? 'justify-center px-2' : 'justify-between px-4')} style={{ height: 'var(--header-height)', borderColor: 'var(--border-color)' }}>
+        <button
+          type="button"
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex min-w-0 items-center gap-3 rounded-md text-left outline-none"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md" style={{ background: 'var(--accent-primary)', color: 'var(--text-on-accent)' }}>
+            <Bot className="h-4 w-4" />
+          </span>
+          {!collapsed && <span className="truncate text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Hermes AgentOS</span>}
+        </button>
+        {!collapsed && (
+          <button type="button" onClick={() => setCollapsed(true)} aria-label="Collapse sidebar" className="rounded-md p-1.5 hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      <nav aria-label="Main navigation" className="flex-1 space-y-1 p-3">
+      {/* Navigation */}
+      <nav aria-label="Main navigation" className="flex-1 space-y-0.5 p-2">
         {navigation.map(({ key, label, icon: Icon }) => {
           const active = currentView === key;
-          const item = <button type="button" onClick={() => onViewChange(key)} aria-current={active ? 'page' : undefined} className={cn('flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500', collapsed && 'justify-center px-0', active ? 'bg-blue-600 text-white shadow-sm' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900')}><Icon className="h-4 w-4 shrink-0" /><span className={cn('truncate', collapsed && 'sr-only')}>{label}</span></button>;
-          return collapsed ? <Tooltip key={key}><TooltipTrigger asChild>{item}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip> : <div key={key}>{item}</div>;
+          const item = (
+            <button
+              type="button"
+              onClick={() => onViewChange(key)}
+              aria-current={active ? 'page' : undefined}
+              className={cn('flex h-9 w-full items-center gap-3 rounded-md px-3 text-[13px] font-medium', collapsed && 'justify-center px-0')}
+              style={{
+                background: active ? 'var(--bg-card-hover)' : 'transparent',
+                color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+                borderLeft: active ? '2px solid var(--accent-primary)' : '2px solid transparent',
+              }}
+              onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--bg-card-hover)'; }}
+              onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span className={cn('truncate', collapsed && 'sr-only')}>{label}</span>
+            </button>
+          );
+          return collapsed
+            ? <Tooltip key={key}><TooltipTrigger asChild>{item}</TooltipTrigger><TooltipContent side="right">{label}</TooltipContent></Tooltip>
+            : <div key={key}>{item}</div>;
         })}
       </nav>
 
-      <div className="space-y-2 border-t border-zinc-200 p-3 dark:border-zinc-800">
-        <div className={cn('flex items-center gap-2 rounded-md px-3 py-2 text-xs', collapsed && 'justify-center px-0')} title={isConnected ? 'Socket connected' : 'Socket disconnected'}>
-          <span className={cn('h-2 w-2 shrink-0 rounded-full', isConnected ? 'bg-emerald-500' : 'bg-red-500')} aria-hidden="true" />
-          <span className={cn('truncate text-zinc-500 dark:text-zinc-400', collapsed && 'sr-only')}>{isConnected ? 'Server connected' : 'Server disconnected'}</span>
+      {/* Footer */}
+      <div className="space-y-1.5 border-t p-2" style={{ borderColor: 'var(--border-color)' }}>
+        {/* Connection status */}
+        <div className={cn('flex items-center gap-2 rounded-md px-3 py-1.5 text-xs', collapsed && 'justify-center px-0')} title={isConnected ? 'Socket connected' : 'Socket disconnected'}>
+          <span className={cn('h-2 w-2 shrink-0 rounded-full')} style={{ background: isConnected ? 'var(--success)' : 'var(--error)' }} aria-hidden="true" />
+          <span className={cn('truncate', collapsed && 'sr-only')} style={{ color: 'var(--text-muted)' }}>{isConnected ? 'Server connected' : 'Server disconnected'}</span>
         </div>
-        <div className={cn('flex', collapsed && 'justify-center')}><ThemeToggle collapsed={collapsed} /></div>
-        {collapsed && <Button variant="ghost" size="icon" onClick={() => setCollapsed(false)} aria-label="Expand sidebar" className="w-full"><PanelLeft className="h-4 w-4" /></Button>}
+        {/* Theme toggle */}
+        <div className={cn('flex', collapsed && 'justify-center')}>
+          <ThemeToggle collapsed={collapsed} />
+        </div>
+        {/* Expand button when collapsed */}
+        {collapsed && (
+          <button type="button" onClick={() => setCollapsed(false)} aria-label="Expand sidebar" className="flex w-full items-center justify-center rounded-md p-2 hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
+            <PanelLeft className="h-4 w-4" />
+          </button>
+        )}
       </div>
     </motion.aside>
   );

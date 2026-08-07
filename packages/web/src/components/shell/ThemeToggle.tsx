@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
@@ -20,15 +19,24 @@ export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
     window.localStorage.setItem('hermes-theme', next ? 'dark' : 'light');
     setDark(next);
   };
-  return (
+
+  const btn = (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={`Switch to ${dark ? 'light' : 'dark'} theme`}
+      className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs hover:opacity-70"
+      style={{ color: 'var(--text-muted)' }}
+    >
+      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {!collapsed && <span>{dark ? 'Light theme' : 'Dark theme'}</span>}
+    </button>
+  );
+
+  return collapsed ? (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size={collapsed ? 'icon' : 'sm'} onClick={toggle} aria-label={`Switch to ${dark ? 'light' : 'dark'} theme`} className={collapsed ? '' : 'w-full justify-start'}>
-          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          {!collapsed && <span>{dark ? 'Light theme' : 'Dark theme'}</span>}
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger asChild>{btn}</TooltipTrigger>
       <TooltipContent side="right">{dark ? 'Light theme' : 'Dark theme'}</TooltipContent>
     </Tooltip>
-  );
+  ) : btn;
 }
