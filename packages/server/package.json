@@ -6,6 +6,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
+    "self-test": "tsx src/self-test.ts",
     "start": "tsx src/index.ts"
   },
   "dependencies": {
