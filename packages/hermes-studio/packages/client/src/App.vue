@@ -30,19 +30,24 @@ const { t, locale } = useI18n()
 const naiveRtl = computed(() => naiveRtlFor(locale.value))
 const appStore = useAppStore()
 const route = useRoute()
+const isCompetition = __COMPETITION_MODE__
 const { sessionSearchOpen } = useSessionSearch()
 
 const themeOverrides = computed(() =>
   getThemeOverrides(isDark.value, isComic.value, customization.value),
 )
-const naiveTheme = computed(() => isDark.value ? darkTheme : null)
+const naiveTheme = computed(() => isCompetition ? darkTheme : (isDark.value ? darkTheme : null))
 
 const isLoginPage = computed(() => route.name === 'login')
 const isStandaloneChatPage = computed(() => route.meta?.standaloneChat === true)
-const usesPageSidebar = computed(() =>
-  ['hermes.chat', 'hermes.session', 'hermes.history', 'hermes.historySession', 'hermes.globalAgent', 'hermes.globalAgentSession', 'hermes.groupChat', 'hermes.groupChatRoom', 'hermes.workflow'].includes(route.name as string),
-)
-const showAppSidebar = computed(() => !isLoginPage.value && !isStandaloneChatPage.value && !usesPageSidebar.value)
+const usesPageSidebar = computed(() => {
+  const names = ['hermes.chat', 'hermes.session', 'hermes.history', 'hermes.historySession', 'hermes.globalAgent', 'hermes.globalAgentSession', 'hermes.groupChat', 'hermes.groupChatRoom', 'hermes.workflow']
+  if (isCompetition) names.push('hermes.competition.dag', 'hermes.competition.roundtable', 'hermes.competition.dashboard', 'hermes.competition.trace')
+  return names.includes(route.name as string)
+})
+const showAppSidebar = computed(() => isCompetition
+  ? !isLoginPage.value && !isStandaloneChatPage.value
+  : !isLoginPage.value && !isStandaloneChatPage.value && !usesPageSidebar.value)
 const showMobileMenuButton = computed(() => !isLoginPage.value && !isStandaloneChatPage.value && (showAppSidebar.value || usesPageSidebar.value))
 
 const nodeVersionLow = computed(() => {
@@ -87,6 +92,7 @@ watch(isLoginPage, (loginPage) => {
 })
 
 onMounted(() => {
+  if (isCompetition) document.body.classList.add('agentos-theme', 'dark')
   void syncThemeFromServer().catch(() => undefined)
   const bridge = desktopBridge()
   if (!bridge?.isDesktop || (desktopPlatform.value !== 'win32' && bridge.windowKind !== 'chat')) return
@@ -101,6 +107,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (isCompetition) document.body.classList.remove('agentos-theme')
   stopWindowStateListener?.()
   appStore.stopHealthPolling()
 })
@@ -147,10 +154,10 @@ useKeyboard()
               </main>
             </div>
           </div>
-          <WebPet v-if="showWebPet" />
+          <WebPet v-if="showWebPet && !isCompetition" />
           <SessionSearchModal v-if="!isDesktopPetRoute && !isStandaloneChatPage && sessionSearchOpen" />
-          <DefaultCredentialPrompt v-if="!isDesktopPetRoute && !isStandaloneChatPage" />
-          <ProviderConfigurationPrompt v-if="!isDesktopPetRoute && !isStandaloneChatPage" />
+          <DefaultCredentialPrompt v-if="!isCompetition && !isDesktopPetRoute && !isStandaloneChatPage" />
+          <ProviderConfigurationPrompt v-if="!isCompetition && !isDesktopPetRoute && !isStandaloneChatPage" />
         </NNotificationProvider>
       </NDialogProvider>
     </NMessageProvider>

@@ -35,11 +35,12 @@ export default defineConfig({
   plugins: [vue()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
-    __COMPETITION_MODE__: JSON.stringify(!!process.env.HERMES_COMPETITION_MODE),
+    __COMPETITION_MODE__: JSON.stringify(['1', 'true', 'yes', 'on'].includes(String(process.env.HERMES_COMPETITION_MODE || '').trim().toLowerCase())),
   },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'packages/client/src'),
+      '@hermes/shared': resolve(__dirname, '../../packages/shared/src'),
     },
   },
   build: {

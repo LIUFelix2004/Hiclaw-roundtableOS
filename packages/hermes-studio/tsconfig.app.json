@@ -7,7 +7,9 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["packages/client/src/*"]
+      "@/*": ["packages/client/src/*"],
+      "@hermes/shared": ["../../packages/shared/src/index.ts"],
+      "@hermes/shared/*": ["../../packages/shared/src/*"]
     },
     "noUnusedLocals": true,
     "noUnusedParameters": true,

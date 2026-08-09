@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ChatPanel from '@/components/hermes/chat/ChatPanel.vue'
+import ChatDAGMini from '@/components/hermes/competition/dag/ChatDAGMini.vue'
 import { useAppStore } from '@/stores/hermes/app'
 import { useChatStore } from '@/stores/hermes/chat'
 import { useProfilesStore } from '@/stores/hermes/profiles'
@@ -25,7 +26,9 @@ const routeProfile = computed(() => {
 })
 
 const isStandaloneChat = computed(() => route.meta?.standaloneChat === true)
-const productTitle = 'Hermes Studio'
+const productTitle = __COMPETITION_MODE__ ? 'AgentOS' : 'Hermes Studio'
+const showDAGPanel = __COMPETITION_MODE__
+const dagPanelCollapsed = ref(false)
 const tabTitle = computed(() => {
   if (route.name !== 'hermes.session' && route.name !== 'desktop.chat') return productTitle
   return chatStore.activeSession?.title?.trim() || productTitle
@@ -78,8 +81,19 @@ watch([routeSessionId, routeProfile], async ([sessionId]) => {
 </script>
 
 <template>
-  <div class="chat-view" :class="{ 'chat-view--standalone': isStandaloneChat }">
+  <div class="chat-view" :class="{ 'chat-view--standalone': isStandaloneChat, 'chat-view--with-dag': showDAGPanel }">
     <ChatPanel :standalone="isStandaloneChat" />
+    <aside v-if="showDAGPanel" class="chat-dag-panel" :class="{ collapsed: dagPanelCollapsed }">
+      <div class="dag-panel-header">
+        <span v-if="!dagPanelCollapsed" class="dag-panel-title">Agent Execution</span>
+        <button class="dag-panel-toggle" :aria-label="dagPanelCollapsed ? 'Expand execution DAG' : 'Collapse execution DAG'" @click="dagPanelCollapsed = !dagPanelCollapsed">
+          {{ dagPanelCollapsed ? '◀' : '▶' }}
+        </button>
+      </div>
+      <div v-show="!dagPanelCollapsed" class="dag-panel-body">
+        <ChatDAGMini />
+      </div>
+    </aside>
   </div>
 </template>
 
@@ -92,5 +106,47 @@ watch([routeSessionId, routeProfile], async ([sessionId]) => {
   &--standalone {
     height: 100%;
   }
+
+  &--with-dag {
+    flex-direction: row;
+    gap: 0;
+
+    :deep(.chat-panel) {
+      flex: 1;
+      min-width: 0;
+    }
+  }
 }
+
+.chat-dag-panel {
+  width: 340px;
+  min-width: 340px;
+  border-left: 1px solid var(--border-color);
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  transition: width .2s ease, min-width .2s ease;
+
+  &.collapsed { width: 40px; min-width: 40px; }
+}
+
+.dag-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-secondary);
+}
+
+.dag-panel-toggle { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 12px; padding: 4px; }
+.dag-panel-toggle:hover { color: var(--accent-primary); }
+.dag-panel-body { flex: 1; min-height: 0; overflow: hidden; }
+
+@media (max-width: 960px) { .chat-dag-panel { display: none; } }
 </style>

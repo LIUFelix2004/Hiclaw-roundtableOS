@@ -34,6 +34,8 @@ import type { WorkspaceRunChangeSummary } from "@/api/hermes/sessions";
 import { isServerTtsProvider } from "@/api/hermes/tts";
 
 const MarkdownRenderer = defineAsyncComponent(async () => (await import("./MarkdownRenderer.vue")).default);
+const CompetitionMessageRenderer = defineAsyncComponent(async () => (await import("../competition/chat/CompetitionMessageRenderer.vue")).default);
+const competitionMode = typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__;
 
 const TOOL_PAYLOAD_DISPLAY_LIMIT = 1000;
 const JSON_STRING_DISPLAY_LIMIT = 200;
@@ -1104,8 +1106,13 @@ onBeforeUnmount(() => {
             </template>
 
             <!-- Render assistant message content -->
+            <CompetitionMessageRenderer
+              v-if="competitionMode && message.role === 'assistant' && message.content && !parsedThinking.body"
+              :content="message.content"
+              :is-streaming="!!message.isStreaming"
+            />
             <MarkdownRenderer
-              v-if="message.role === 'assistant' && message.content && !parsedThinking.body"
+              v-else-if="message.role === 'assistant' && message.content && !parsedThinking.body"
               :content="message.content"
               :heading-id-prefix="effectiveHeadingIdPrefix"
             />

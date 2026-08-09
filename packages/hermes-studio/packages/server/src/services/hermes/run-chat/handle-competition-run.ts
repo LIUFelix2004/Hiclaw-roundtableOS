@@ -155,10 +155,23 @@ export async function handleCompetitionRun(
     if (finished) return
     finished = true
     backendSocket.removeAllListeners()
+    socket.off('roundtable:start', handleRoundtableStart)
+    socket.off('rollback:respond', handleRollbackRespond)
     backendSocket.disconnect()
     state.isWorking = false
     state.runId = undefined
   }
+
+  const handleRoundtableStart = (payload: any) => {
+    if (finished) return
+    backendSocket.emit('roundtable:start', payload)
+  }
+  const handleRollbackRespond = (payload: any) => {
+    if (finished) return
+    backendSocket.emit('rollback:respond', payload)
+  }
+  socket.on('roundtable:start', handleRoundtableStart)
+  socket.on('rollback:respond', handleRollbackRespond)
 
   const finishSuccess = (finalOutput: string) => {
     if (finished) return
@@ -347,10 +360,26 @@ export async function handleCompetitionRun(
     })
   })
 
+  backendSocket.on('rollback:human', (payload: any) => {
+    if (finished) return
+    emitToSession(socket, sessionId, 'agent.event', {
+      event: 'agent.event',
+      session_id: sessionId,
+      run_id: runId,
+      name: 'rollback_human',
+      preview: payload.message || payload.instructions || 'Human approval required',
+      data: payload,
+    })
+  })
+
   // roundtable events
   backendSocket.on('roundtable:speech', (payload: any) => {
     if (finished) return
     const speechText = `**[Round ${payload.round}] ${payload.agent}** (${payload.stance}):\n${payload.content}\n\n`
+    emitToSession(socket, sessionId, 'agent.event', {
+      event: 'agent.event', session_id: sessionId, run_id: runId,
+      name: 'roundtable_speech', preview: `${payload.agent} round ${payload.round}`, data: payload,
+    })
     emitToSession(socket, sessionId, 'message.delta', {
       event: 'message.delta',
       session_id: sessionId,
@@ -363,6 +392,10 @@ export async function handleCompetitionRun(
   backendSocket.on('roundtable:consensus', (payload: any) => {
     if (finished) return
     const consensusText = `\n**Consensus (${payload.rounds} rounds):**\n${payload.finalAnswer || payload.finalSolution || ''}\n\n`
+    emitToSession(socket, sessionId, 'agent.event', {
+      event: 'agent.event', session_id: sessionId, run_id: runId,
+      name: 'roundtable_consensus', preview: 'Consensus reached', data: payload,
+    })
     emitToSession(socket, sessionId, 'message.delta', {
       event: 'message.delta',
       session_id: sessionId,

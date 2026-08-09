@@ -33,6 +33,7 @@ const showChangelog = ref(false);
 const showVersionManagement = ref(false);
 const showDockerUpdateTip = ref(false);
 const isDockerRuntime = computed(() => appStore.isDocker);
+const competitionMode = typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__;
 
 function hasRoute(name: string): boolean {
   return router.hasRoute(name);
@@ -109,9 +110,30 @@ function handleUpdateClick() {
 
 <template>
   <aside class="sidebar" :class="{ open: appStore.sidebarOpen, collapsed: appStore.sidebarCollapsed }" @click="handleSidebarClick">
+    <div v-if="competitionMode" class="agentos-brand">
+      <div class="agentos-logo">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#0ea5e9" />
+          <path d="M8 22V10l8-4 8 4v12l-8 4-8-4z" stroke="#fff" stroke-width="1.5" fill="none" />
+          <circle cx="16" cy="14" r="3" stroke="#fff" stroke-width="1.5" fill="none" />
+          <path d="M16 17v5" stroke="#fff" stroke-width="1.5" />
+        </svg>
+      </div>
+      <span class="agentos-title">AgentOS</span>
+      <span class="agentos-subtitle">Multi-Agent Platform</span>
+    </div>
     <nav class="sidebar-nav">
+      <div v-if="competitionMode" class="nav-group competition-nav-group">
+        <div class="nav-group-items">
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.dashboard' }" :active="selectedKey === 'hermes.competition.dashboard'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg><span>Dashboard</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.chat' }" :active="selectedKey === 'hermes.chat' || selectedKey === 'hermes.session'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Conversation</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.dag' }" :active="selectedKey === 'hermes.competition.dag'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="10.5" y2="16"/><line x1="15.5" y1="7.5" x2="13.5" y2="16"/></svg><span>Execution DAG</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.roundtable' }" :active="selectedKey === 'hermes.competition.roundtable'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="2"/><circle cx="7.5" cy="16" r="2"/><circle cx="16.5" cy="16" r="2"/></svg><span>AI Roundtable</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.trace' }" :active="selectedKey === 'hermes.competition.trace'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Trace Explorer</span></RouteLinkItem>
+        </div>
+      </div>
       <!-- Agent -->
-      <div class="nav-group">
+      <div v-if="!competitionMode" class="nav-group">
         <div class="nav-group-label" @click="toggleGroup('agent')">
           <span>{{ groupLabel("Agent") }}</span>
           <svg class="nav-group-arrow" :class="{ collapsed: isGroupCollapsed('agent') }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -201,7 +223,7 @@ function handleUpdateClick() {
       </div>
 
       <!-- Monitoring -->
-      <div class="nav-group">
+      <div v-if="!competitionMode" class="nav-group">
         <div class="nav-group-label" @click="toggleGroup('monitoring')">
           <span>{{ groupLabel("Monitoring") }}</span>
           <svg class="nav-group-arrow" :class="{ collapsed: isGroupCollapsed('monitoring') }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -254,7 +276,7 @@ function handleUpdateClick() {
       </div>
 
       <!-- Tools -->
-      <div class="nav-group">
+      <div v-if="!competitionMode" class="nav-group">
         <div class="nav-group-label" @click="toggleGroup('tools')">
           <span>{{ groupLabel("Tools") }}</span>
           <svg class="nav-group-arrow" :class="{ collapsed: isGroupCollapsed('tools') }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -304,7 +326,7 @@ function handleUpdateClick() {
       </div>
 
       <!-- System -->
-      <div class="nav-group">
+      <div class="nav-group" v-if="!competitionMode || selectedKey === 'hermes.settings'">
         <div class="nav-group-label" @click="toggleGroup('system')">
           <span>{{ groupLabel("System") }}</span>
           <svg class="nav-group-arrow" :class="{ collapsed: isGroupCollapsed('system') }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -312,7 +334,7 @@ function handleUpdateClick() {
           </svg>
         </div>
         <div v-show="!isGroupCollapsed('system')" class="nav-group-items">
-          <RouteLinkItem class="nav-item" :to="{ name: 'hermes.theme' }" :active="selectedKey === 'hermes.theme'">
+          <RouteLinkItem v-if="!competitionMode" class="nav-item" :to="{ name: 'hermes.theme' }" :active="selectedKey === 'hermes.theme'">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="13.5" cy="6.5" r="2.5" />
               <circle cx="17.5" cy="10.5" r="2.5" />
@@ -321,7 +343,7 @@ function handleUpdateClick() {
             </svg>
             <span>{{ t("sidebar.theme") }}</span>
           </RouteLinkItem>
-          <RouteLinkItem v-if="isSuperAdmin" class="nav-item" :to="{ name: 'hermes.profiles' }" :active="selectedKey === 'hermes.profiles'">
+          <RouteLinkItem v-if="!competitionMode && isSuperAdmin" class="nav-item" :to="{ name: 'hermes.profiles' }" :active="selectedKey === 'hermes.profiles'">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
@@ -339,8 +361,8 @@ function handleUpdateClick() {
       </div>
     </nav>
 
-    <ProfileSelector />
-    <ModelSelector />
+    <ProfileSelector v-if="!competitionMode" />
+    <ModelSelector v-if="!competitionMode" />
 
     <div class="sidebar-footer">
       <button class="nav-item logout-item" @click="handleLogout">
@@ -371,10 +393,10 @@ function handleUpdateClick() {
       </div>
       <div class="version-info">
         <div class="version-links">
-          <a class="sidebar-footer-link" href="https://github.com/EKKOLearnAI/hermes-studio" target="_blank" rel="noopener noreferrer" title="GitHub">
+          <a v-if="!competitionMode" class="sidebar-footer-link" href="https://github.com/EKKOLearnAI/hermes-studio" target="_blank" rel="noopener noreferrer" title="GitHub">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
           </a>
-          <a class="sidebar-footer-link" href="https://hermes-studio.ai/" target="_blank" rel="noopener noreferrer" title="Website">
+          <a v-if="!competitionMode" class="sidebar-footer-link" href="https://hermes-studio.ai/" target="_blank" rel="noopener noreferrer" title="Website">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           </a>
         </div>
@@ -386,7 +408,7 @@ function handleUpdateClick() {
           @keydown.enter="openChangelog"
           @keydown.space.prevent="openChangelog"
         >
-          Studio v{{ appStore.serverVersion || "0.1.0" }}
+          {{ competitionMode ? 'AgentOS v1.0' : `Studio v${appStore.serverVersion || '0.1.0'}` }}
         </span>
         <ThemeSwitch />
       </div>
@@ -470,6 +492,30 @@ function handleUpdateClick() {
 
 <style scoped lang="scss">
 @use "@/styles/variables" as *;
+
+.agentos-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 12px 12px;
+  gap: 4px;
+}
+.agentos-title { font-size: 18px; font-weight: 700; letter-spacing: .04em; color: var(--text-primary); }
+.agentos-subtitle { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: #0ea5e9; }
+.competition-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all .15s ease;
+}
+.competition-nav-item:hover { background: rgba(14, 165, 233, .08); color: var(--text-primary); }
+.competition-nav-item.active, .competition-nav-item[data-active="true"] { background: rgba(14, 165, 233, .12); color: #0ea5e9; }
+.competition-nav-item.active svg, .competition-nav-item[data-active="true"] svg { stroke: #0ea5e9; }
 
 .sidebar {
   position: relative;

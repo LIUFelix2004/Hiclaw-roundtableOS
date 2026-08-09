@@ -1,4 +1,4 @@
-import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/hermes/chat'
+import { startRunViaSocket, resumeSession, registerSessionHandlers, unregisterSessionHandlers, getChatRunSocket, connectChatRun, respondToolApproval, onPeerUserMessage, onSessionCommand, onSessionTitleUpdated, onSessionWorkspaceUpdated, respondClarify, type ChatRunTransport, type RunEvent, type ResumeSessionPayload, type StartRunRequest, type ContentBlock as ContentBlockImport } from '@/api/hermes/chat'
 import { archiveSession as archiveSessionApi, deleteSession as deleteSessionApi, fetchSessionMessagesPage, fetchSessions, fetchWorkspaceRunChangeFile, fetchWorkspaceRunChangesForSession, setSessionModel, type HermesMessage, type SessionSummary, type WorkspaceRunChangeFileDetail, type WorkspaceRunChangeSummary } from '@/api/hermes/sessions'
 import { getActiveProfileName } from '@/api/client'
 import { inferCodingAgentApiMode, normalizeCodingAgentApiMode, type ChatCodingAgentId } from '@/api/coding-agents'
@@ -14,6 +14,9 @@ import { showCompletionNotification } from '@/utils/completion-notification'
 import { detectThinkingBoundary } from '@/utils/thinking-parser'
 import { isKnownBridgeSessionCommand } from '@/utils/hermes/bridge-session-commands'
 import { responseErrorMessage } from '@/utils/http-error'
+import { useCompetitionDagStore } from './competition-dag'
+import { useCompetitionRoundtableStore } from './competition-roundtable'
+import { useCompetitionTraceStore } from './competition-trace'
 
 // Re-export ContentBlock for convenience
 export type ContentBlock = ContentBlockImport
@@ -1256,6 +1259,19 @@ export const useChatStore = defineStore('chat', () => {
     const sid = activeSessionId.value
     return sid ? pendingClarifies.value.get(sid) || null : null
   })
+  const competitionRollbackEvent = ref<Record<string, unknown> | null>(null)
+  const showCompetitionRollbackDialog = ref(false)
+
+  function emitCompetitionEvent(event: string, payload: unknown) {
+    if (typeof __COMPETITION_MODE__ !== 'undefined' && !__COMPETITION_MODE__) return
+    const socket = getChatRunSocket(runtimeTransport()) || connectChatRun(null, runtimeTransport())
+    socket.emit(event, payload)
+  }
+
+  function respondCompetitionRollback(taskId: string, action: 'approve' | 'rerun' | 'cancel') {
+    emitCompetitionEvent('rollback:respond', { taskId, action })
+    showCompetitionRollbackDialog.value = false
+  }
 
   function setSessionProfileFilter(profile: string | null) {
     const normalized = profile?.trim()
@@ -2656,6 +2672,21 @@ export const useChatStore = defineStore('chat', () => {
     const sid = evt.session_id
     if (!sid) return
     if ((evt as any).source === 'coding_agent' && (evt as any).kind === 'status') return
+    if (typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__) {
+      const name = String((evt as any).name || '')
+      const data = ((evt as any).data || {}) as Record<string, unknown>
+      if (name === 'task_plan') useCompetitionDagStore().setTaskPlan(data.tasks)
+      else if (name.startsWith('agent_') && name !== 'agent_trace') {
+        const [, agent, status] = name.split('_')
+        if (agent && status) useCompetitionDagStore().updateAgentStatus({ agent: agent as any, status: status as any, progress: Number(data.progress || 0), taskId: String(data.taskId || ''), model: String(data.model || '') })
+      } else if (name === 'agent_trace') useCompetitionTraceStore().addTrace(data)
+      else if (name === 'roundtable_speech') useCompetitionRoundtableStore().addSpeech(data as any)
+      else if (name === 'roundtable_consensus') useCompetitionRoundtableStore().setConsensus(data as any)
+      else if (name === 'rollback_start' || name === 'rollback_complete' || name === 'rollback_human') {
+        competitionRollbackEvent.value = { ...data, event: name }
+        showCompetitionRollbackDialog.value = name === 'rollback_human'
+      }
+    }
     const text = String((evt as any).text || (evt as any).message || '').trim()
     if (!text) return
 
@@ -4993,6 +5024,8 @@ export const useChatStore = defineStore('chat', () => {
     pendingApprovals,
     activePendingApproval,
     activePendingClarify,
+    competitionRollbackEvent,
+    showCompetitionRollbackDialog,
     subagentStreams,
     getSubagentStream,
     removeQueuedMessage,
@@ -5016,6 +5049,8 @@ export const useChatStore = defineStore('chat', () => {
     stopStreaming,
     respondApproval,
     respondToClarify,
+    emitCompetitionEvent,
+    respondCompetitionRollback,
     loadSessions,
     refreshSessionListOnly,
     refreshActiveSession,

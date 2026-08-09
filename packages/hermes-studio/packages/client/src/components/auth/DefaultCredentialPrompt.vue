@@ -14,6 +14,7 @@ const show = ref(false);
 const loading = ref(false);
 const checkedToken = ref("");
 const promptedUserId = ref<number | null>(null);
+const competitionMode = typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__;
 
 function dismissalKey(userId: number): string {
   return `hermes_default_credentials_prompt_dismissed_${userId}`;
@@ -24,6 +25,10 @@ function isDesktopShell(): boolean {
 }
 
 async function checkDefaultCredentials() {
+  if (competitionMode) {
+    show.value = false;
+    return;
+  }
   if (isDesktopShell()) {
     show.value = false;
     return;

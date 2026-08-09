@@ -16,6 +16,9 @@ import { NButton, NInput } from "naive-ui";
 import VirtualMessageList from "./VirtualMessageList.vue";
 import MessageItem from "./MessageItem.vue";
 import LiveReasoningStatus from "./LiveReasoningStatus.vue";
+import AgentProgressBar from "../competition/dag/AgentProgressBar.vue";
+import RollbackNotice from "../competition/rollback/RollbackNotice.vue";
+import RollbackHumanDialog from "../competition/rollback/RollbackHumanDialog.vue";
 import { LIVE_CHAT_MAX_LOADED_MESSAGES, parseMessageReference, useChatStore, type Message } from "@/stores/hermes/chat";
 import { useToolTraceVisibility } from "@/composables/useToolTraceVisibility";
 import { openSubagentStream, subagentIdFromToolCall } from "@/utils/hermes/subagent-stream";
@@ -30,6 +33,7 @@ const props = withDefaults(defineProps<{
 })
 
 const chatStore = useChatStore();
+const competitionMode = typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__;
 const { t } = useI18n();
 const { toolTraceVisible } = useToolTraceVisibility();
 const listRef = ref<InstanceType<typeof VirtualMessageList> | null>(null);
@@ -573,6 +577,9 @@ defineExpose({
 
 <template>
   <div class="message-list-shell">
+    <RollbackNotice v-if="competitionMode" />
+    <RollbackHumanDialog v-if="competitionMode" />
+    <AgentProgressBar v-if="competitionMode" />
     <VirtualMessageList
       :key="activeSessionScrollKey || 'chat-empty'"
       ref="listRef"

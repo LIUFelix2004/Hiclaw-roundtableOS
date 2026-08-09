@@ -23,6 +23,26 @@ const router = createRouter({
       component: () => import('@/views/hermes/ChatView.vue'),
     },
     {
+      path: '/hermes/competition/dag',
+      name: 'hermes.competition.dag',
+      component: () => import('@/views/hermes/CompetitionDAGView.vue'),
+    },
+    {
+      path: '/hermes/competition/roundtable',
+      name: 'hermes.competition.roundtable',
+      component: () => import('@/views/hermes/CompetitionRoundtableView.vue'),
+    },
+    {
+      path: '/hermes/competition/dashboard',
+      name: 'hermes.competition.dashboard',
+      component: () => import('@/views/hermes/CompetitionDashboardView.vue'),
+    },
+    {
+      path: '/hermes/competition/trace',
+      name: 'hermes.competition.trace',
+      component: () => import('@/views/hermes/CompetitionTraceView.vue'),
+    },
+    {
       path: '/hermes/session/:sessionId',
       name: 'hermes.session',
       component: () => import('@/views/hermes/ChatView.vue'),
@@ -212,16 +232,31 @@ function isDesktopShell(): boolean {
   }).hermesDesktop?.isDesktop === true
 }
 
+function competitionHome() {
+  return __COMPETITION_MODE__ ? { name: 'hermes.competition.dashboard' } : { path: '/hermes/chat' }
+}
+
 router.beforeEach(async (to, _from, next) => {
   await ensureDesktopAuth()
+
+  if (__COMPETITION_MODE__ && to.path === '/') {
+    next({ name: 'hermes.competition.dashboard' })
+    return
+  }
 
   // Public pages don't need auth
   if (to.meta.public) {
     // Already has key, skip login
     if (to.name === 'login' && hasApiKey() && !isDesktopShell()) {
-      next({ path: '/hermes/chat' })
+      next(competitionHome())
       return
     }
+    next()
+    return
+  }
+
+  // Competition mode bypasses auth
+  if (__COMPETITION_MODE__) {
     next()
     return
   }
@@ -233,7 +268,7 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   if (to.meta.requiresSuperAdmin && !isStoredSuperAdmin()) {
-    next({ name: 'hermes.chat' })
+    next(__COMPETITION_MODE__ ? competitionHome() : { name: 'hermes.chat' })
     return
   }
 
