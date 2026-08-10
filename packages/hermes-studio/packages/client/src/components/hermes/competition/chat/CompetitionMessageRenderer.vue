@@ -29,7 +29,7 @@ const plainContent = computed(() => props.content
 <template>
   <div class="competition-message" :class="{ streaming: props.isStreaming }">
     <NCard v-if="taskPlan" size="small" class="structured-block task-plan" :bordered="false">
-      <template #header>Task Plan</template>
+      <template #header>任务计划</template>
       <MarkdownRenderer :content="taskPlan" />
     </NCard>
     <NCollapse v-if="agentSections.length" v-model:expanded-names="expandedAgents" class="agent-sections">
@@ -38,14 +38,14 @@ const plainContent = computed(() => props.content
       </NCollapseItem>
     </NCollapse>
     <NCard v-if="findings.length" size="small" class="structured-block findings" :bordered="false">
-      <template #header>Key Findings</template>
+      <template #header>关键发现</template>
       <div v-for="finding in findings" :key="finding.title" class="finding-row">
         <div><strong>{{ finding.title }}</strong><span>{{ finding.detail }}</span></div>
         <NProgress v-if="finding.confidence" type="line" :percentage="finding.confidence" :show-indicator="false" />
       </div>
     </NCard>
     <div v-if="validation" class="validation-row">
-      <NTag :type="validation.pass ? 'success' : 'error'">{{ validation.pass ? 'Validation passed' : 'Validation failed' }}</NTag>
+      <NTag :type="validation.pass ? 'success' : 'error'">{{ validation.pass ? '验证通过' : '验证失败' }}</NTag>
       <span>{{ validation.text }}</span>
     </div>
     <MarkdownRenderer v-if="plainContent" :content="plainContent" />
@@ -54,8 +54,8 @@ const plainContent = computed(() => props.content
 
 <style scoped>
 .competition-message { display: grid; gap: 10px; min-width: 0; }
-.structured-block { background: color-mix(in srgb, var(--n-color, #fff) 88%, #0ea5e9); border: 1px solid rgba(14, 165, 233, .18); }
-.agent-sections { border: 1px solid rgba(14, 165, 233, .16); border-radius: 8px; padding: 4px 10px; }
+.structured-block { background: color-mix(in srgb, var(--n-color, #fff) 88%, #111111); border: 1px solid rgba(0, 0, 0, .18); }
+.agent-sections { border: 1px solid rgba(0, 0, 0, .16); border-radius: 8px; padding: 4px 10px; }
 .finding-row { display: grid; gap: 4px; padding: 8px 0; border-bottom: 1px solid rgba(148, 163, 184, .18); }
 .finding-row div { display: flex; gap: 8px; flex-wrap: wrap; }
 .finding-row span { color: var(--text-secondary); }

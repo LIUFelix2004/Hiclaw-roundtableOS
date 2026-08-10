@@ -17,7 +17,7 @@ const edges = computed<Edge[]>(() => dag.tasks.flatMap(task => task.dependsOn.ma
   source: parent,
   target: task.id,
   animated: task.status === 'running',
-  style: { stroke: '#0ea5e9' },
+  style: { stroke: '#111111' },
 }))))
 </script>
 
@@ -25,13 +25,13 @@ const edges = computed<Edge[]>(() => dag.tasks.flatMap(task => task.dependsOn.ma
   <div class="chat-dag-mini">
     <div v-if="!dag.tasks.length" class="dag-empty">
       <div class="dag-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" opacity=".3"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="10.5" y2="16"/><line x1="15.5" y1="7.5" x2="13.5" y2="16"/></svg></div>
-      <span>Waiting for task plan...</span>
+      <span>等待任务计划...</span>
     </div>
     <VueFlow v-else id="chat-dag-mini" :nodes="nodes" :edges="edges" :nodes-draggable="false" :nodes-connectable="false" :zoom-on-scroll="false" :pan-on-drag="false" fit-view-on-init>
       <template #node-competition-agent="nodeProps"><CompetitionAgentNode v-bind="nodeProps" :compact="true" /></template>
       <Background pattern-color="#94a3b8" :gap="20" />
     </VueFlow>
-    <div class="dag-summary"><span class="dag-stat"><span class="dot dot--running"></span>{{ dag.runningCount }} running</span><span class="dag-stat"><span class="dot dot--success"></span>{{ dag.completedCount }} done</span></div>
+    <div class="dag-summary"><span class="dag-stat"><span class="dot dot--running"></span>{{ dag.runningCount }} 运行中</span><span class="dag-stat"><span class="dot dot--success"></span>{{ dag.completedCount }} 已完成</span></div>
   </div>
 </template>
 

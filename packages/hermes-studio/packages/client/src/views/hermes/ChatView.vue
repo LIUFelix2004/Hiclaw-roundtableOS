@@ -85,8 +85,8 @@ watch([routeSessionId, routeProfile], async ([sessionId]) => {
     <ChatPanel :standalone="isStandaloneChat" />
     <aside v-if="showDAGPanel" class="chat-dag-panel" :class="{ collapsed: dagPanelCollapsed }">
       <div class="dag-panel-header">
-        <span v-if="!dagPanelCollapsed" class="dag-panel-title">Agent Execution</span>
-        <button class="dag-panel-toggle" :aria-label="dagPanelCollapsed ? 'Expand execution DAG' : 'Collapse execution DAG'" @click="dagPanelCollapsed = !dagPanelCollapsed">
+        <span v-if="!dagPanelCollapsed" class="dag-panel-title">智能体执行</span>
+        <button class="dag-panel-toggle" :aria-label="dagPanelCollapsed ? '展开执行 DAG' : '收起执行 DAG'" @click="dagPanelCollapsed = !dagPanelCollapsed">
           {{ dagPanelCollapsed ? '◀' : '▶' }}
         </button>
       </div>

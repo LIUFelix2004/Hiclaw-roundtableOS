@@ -170,18 +170,18 @@ export const darkThemeOverrides: GlobalThemeOverrides = {
 
 export const agentosThemeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: '#0ea5e9', primaryColorHover: '#38bdf8', primaryColorPressed: '#0284c7', primaryColorSuppl: '#0ea5e9',
-    bodyColor: '#0a0e17', cardColor: '#1e293b', modalColor: '#1e293b', popoverColor: '#1e293b', tableColor: '#1e293b', inputColor: '#1e293b', actionColor: '#111827',
-    textColorBase: '#f1f5f9', textColor1: '#f1f5f9', textColor2: '#94a3b8', textColor3: '#64748b', dividerColor: '#334155', borderColor: '#334155', hoverColor: 'rgba(14, 165, 233, 0.08)',
+    primaryColor: '#111111', primaryColorHover: '#333333', primaryColorPressed: '#000000', primaryColorSuppl: '#111111',
+    bodyColor: '#ffffff', cardColor: '#ffffff', modalColor: '#ffffff', popoverColor: '#ffffff', tableColor: '#ffffff', inputColor: '#ffffff', actionColor: '#f8f9fa',
+    textColorBase: '#111111', textColor1: '#111111', textColor2: '#4b5563', textColor3: '#9ca3af', dividerColor: '#e5e7eb', borderColor: '#e5e7eb', hoverColor: 'rgba(0, 0, 0, 0.04)',
     borderRadius: '8px', borderRadiusSmall: '6px', fontSize: '14px', fontSizeMedium: '14px', heightMedium: '36px', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', fontFamilyMono: 'JetBrains Mono, Fira Code, Consolas, monospace',
   },
-  Layout: { color: '#0a0e17', siderColor: '#0d1321', headerColor: '#0a0e17' },
-  Menu: { itemTextColorActive: '#0ea5e9', itemTextColorActiveHover: '#38bdf8', itemTextColorChildActive: '#0ea5e9', itemIconColorActive: '#0ea5e9', itemIconColorActiveHover: '#38bdf8', itemColorActive: 'rgba(14, 165, 233, 0.12)', itemColorActiveHover: 'rgba(14, 165, 233, 0.16)', arrowColorActive: '#0ea5e9' },
-  Button: { textColorPrimary: '#ffffff', colorPrimary: '#0ea5e9', colorHoverPrimary: '#38bdf8', colorPressedPrimary: '#0284c7' },
-  Input: { color: '#1e293b', colorFocus: '#1e293b', border: '1px solid #334155', borderHover: '1px solid #0ea5e9', borderFocus: '1px solid #0ea5e9', borderDisabled: '1px solid #1e293b', placeholderColor: '#64748b', caretColor: '#0ea5e9' },
-  InternalSelection: { border: '1px solid #334155', borderHover: '1px solid #0ea5e9', borderActive: '1px solid #0ea5e9', borderFocus: '1px solid #0ea5e9' },
-  Card: { color: '#1e293b', borderColor: '#334155' },
-  Modal: { color: '#1e293b' },
+  Layout: { color: '#ffffff', siderColor: '#f7f7f8', headerColor: '#ffffff' },
+  Menu: { itemTextColorActive: '#111111', itemTextColorActiveHover: '#000000', itemTextColorChildActive: '#111111', itemIconColorActive: '#111111', itemIconColorActiveHover: '#000000', itemColorActive: 'rgba(0, 0, 0, 0.06)', itemColorActiveHover: 'rgba(0, 0, 0, 0.1)', arrowColorActive: '#111111' },
+  Button: { textColorPrimary: '#ffffff', colorPrimary: '#111111', colorHoverPrimary: '#333333', colorPressedPrimary: '#000000' },
+  Input: { color: '#ffffff', colorFocus: '#ffffff', border: '1px solid #e5e7eb', borderHover: '1px solid #9ca3af', borderFocus: '1px solid #111111', borderDisabled: '1px solid #f0f0f0', placeholderColor: '#9ca3af', caretColor: '#111111' },
+  InternalSelection: { border: '1px solid #e5e7eb', borderHover: '1px solid #9ca3af', borderActive: '1px solid #111111', borderFocus: '1px solid #111111' },
+  Card: { color: '#ffffff', borderColor: '#e5e7eb' },
+  Modal: { color: '#ffffff' },
   Tag: { borderRadius: '6px' },
 }
 
@@ -190,7 +190,7 @@ export function getThemeOverrides(
   isComic?: boolean,
   customization?: ThemeCustomization,
 ): GlobalThemeOverrides {
-  if (typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__) return agentosThemeOverrides
+  if (typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__) return agentosThemeOverrides as GlobalThemeOverrides
   const base = isDark ? darkThemeOverrides : lightThemeOverrides
   if (!isComic && !customization) return base
   const comicFont = "'Comic Neue', 'ZCOOL KuaiLe', 'Zen Maru Gothic', 'Gaegu', cursive, sans-serif"

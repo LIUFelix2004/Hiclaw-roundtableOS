@@ -112,24 +112,19 @@ function handleUpdateClick() {
   <aside class="sidebar" :class="{ open: appStore.sidebarOpen, collapsed: appStore.sidebarCollapsed }" @click="handleSidebarClick">
     <div v-if="competitionMode" class="agentos-brand">
       <div class="agentos-logo">
-        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect width="32" height="32" rx="8" fill="#0ea5e9" />
-          <path d="M8 22V10l8-4 8 4v12l-8 4-8-4z" stroke="#fff" stroke-width="1.5" fill="none" />
-          <circle cx="16" cy="14" r="3" stroke="#fff" stroke-width="1.5" fill="none" />
-          <path d="M16 17v5" stroke="#fff" stroke-width="1.5" />
-        </svg>
+        <img src="/agents/brand-logo.png" alt="AgentOS" width="40" height="40" style="border-radius: 10px; object-fit: cover;" />
       </div>
       <span class="agentos-title">AgentOS</span>
-      <span class="agentos-subtitle">Multi-Agent Platform</span>
+      <span class="agentos-subtitle">多智能体协同平台</span>
     </div>
     <nav class="sidebar-nav">
       <div v-if="competitionMode" class="nav-group competition-nav-group">
         <div class="nav-group-items">
-          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.dashboard' }" :active="selectedKey === 'hermes.competition.dashboard'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg><span>Dashboard</span></RouteLinkItem>
-          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.chat' }" :active="selectedKey === 'hermes.chat' || selectedKey === 'hermes.session'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Conversation</span></RouteLinkItem>
-          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.dag' }" :active="selectedKey === 'hermes.competition.dag'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="10.5" y2="16"/><line x1="15.5" y1="7.5" x2="13.5" y2="16"/></svg><span>Execution DAG</span></RouteLinkItem>
-          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.roundtable' }" :active="selectedKey === 'hermes.competition.roundtable'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="2"/><circle cx="7.5" cy="16" r="2"/><circle cx="16.5" cy="16" r="2"/></svg><span>AI Roundtable</span></RouteLinkItem>
-          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.trace' }" :active="selectedKey === 'hermes.competition.trace'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Trace Explorer</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.dashboard' }" :active="selectedKey === 'hermes.competition.dashboard'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg><span>仪表盘</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.chat' }" :active="selectedKey === 'hermes.chat' || selectedKey === 'hermes.session'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>对话</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.dag' }" :active="selectedKey === 'hermes.competition.dag'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="12" cy="18" r="3"/><line x1="8.5" y1="7.5" x2="10.5" y2="16"/><line x1="15.5" y1="7.5" x2="13.5" y2="16"/></svg><span>执行 DAG</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.roundtable' }" :active="selectedKey === 'hermes.competition.roundtable'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="2"/><circle cx="7.5" cy="16" r="2"/><circle cx="16.5" cy="16" r="2"/></svg><span>AI 圆桌</span></RouteLinkItem>
+          <RouteLinkItem class="nav-item competition-nav-item" :to="{ name: 'hermes.competition.trace' }" :active="selectedKey === 'hermes.competition.trace'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>追踪面板</span></RouteLinkItem>
         </div>
       </div>
       <!-- Agent -->
@@ -501,7 +496,7 @@ function handleUpdateClick() {
   gap: 4px;
 }
 .agentos-title { font-size: 18px; font-weight: 700; letter-spacing: .04em; color: var(--text-primary); }
-.agentos-subtitle { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: #0ea5e9; }
+.agentos-subtitle { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--text-secondary); }
 .competition-nav-item {
   display: flex;
   align-items: center;
@@ -513,9 +508,9 @@ function handleUpdateClick() {
   color: var(--text-secondary);
   transition: all .15s ease;
 }
-.competition-nav-item:hover { background: rgba(14, 165, 233, .08); color: var(--text-primary); }
-.competition-nav-item.active, .competition-nav-item[data-active="true"] { background: rgba(14, 165, 233, .12); color: #0ea5e9; }
-.competition-nav-item.active svg, .competition-nav-item[data-active="true"] svg { stroke: #0ea5e9; }
+.competition-nav-item:hover { background: rgba(0, 0, 0, .04); color: var(--text-primary); }
+.competition-nav-item.active, .competition-nav-item[data-active="true"] { background: rgba(0, 0, 0, .06); color: #111111; font-weight: 600; }
+.competition-nav-item.active svg, .competition-nav-item[data-active="true"] svg { stroke: #111111; }
 
 .sidebar {
   position: relative;

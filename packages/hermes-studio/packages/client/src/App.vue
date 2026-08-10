@@ -36,7 +36,7 @@ const { sessionSearchOpen } = useSessionSearch()
 const themeOverrides = computed(() =>
   getThemeOverrides(isDark.value, isComic.value, customization.value),
 )
-const naiveTheme = computed(() => isCompetition ? darkTheme : (isDark.value ? darkTheme : null))
+const naiveTheme = computed(() => isCompetition ? null : (isDark.value ? darkTheme : null))
 
 const isLoginPage = computed(() => route.name === 'login')
 const isStandaloneChatPage = computed(() => route.meta?.standaloneChat === true)
@@ -92,7 +92,7 @@ watch(isLoginPage, (loginPage) => {
 })
 
 onMounted(() => {
-  if (isCompetition) document.body.classList.add('agentos-theme', 'dark')
+  if (isCompetition) document.body.classList.add('agentos-theme')
   void syncThemeFromServer().catch(() => undefined)
   const bridge = desktopBridge()
   if (!bridge?.isDesktop || (desktopPlatform.value !== 'win32' && bridge.windowKind !== 'chat')) return

@@ -3,8 +3,9 @@
   "configurations": [
     {
       "name": "hermes-studio",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nodemon"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "packages/hermes-studio",
       "port": 8649,
       "url": "http://localhost:8649",
       "env": {
