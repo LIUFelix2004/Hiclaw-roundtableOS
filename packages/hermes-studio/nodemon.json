@@ -1,0 +1,20 @@
+{
+  "watch": ["packages/server/src", "packages/ekko-agent/src"],
+  "ext": "ts,tsx",
+  "execMap": {
+    "ts": "node -r ts-node/register"
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "PORT": "8647",
+    "TS_NODE_PROJECT": "packages/server/tsconfig.json",
+    "HERMES_WEB_UI_STOP_GATEWAYS_ON_SHUTDOWN": "1",
+    "HERMES_WEB_UI_DISABLE_GATEWAY_AUTOSTART": "1",
+    "HERMES_WEB_UI_DISABLE_SKILL_INJECTION": "1",
+    "HERMES_COMPETITION_MODE": "1",
+    "HERMES_COMPETITION_BACKEND_URL": "http://127.0.0.1:8648"
+  },
+  "exec": "node -r ts-node/register packages/server/src/index.ts",
+  "nodeArgs": ["--no-warnings"],
+  "delay": "1000"
+}

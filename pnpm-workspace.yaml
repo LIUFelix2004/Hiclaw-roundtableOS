@@ -1,5 +1,7 @@
 packages:
-  - "packages/*"
+  - "packages/shared"
+  - "packages/server"
+  - "packages/web"
 allowBuilds:
   esbuild: true
   sharp: true

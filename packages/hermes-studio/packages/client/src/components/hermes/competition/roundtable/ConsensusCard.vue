@@ -1,0 +1,3 @@
+<script setup lang="ts">import { NCard, NList, NListItem, NTag } from 'naive-ui'; import MarkdownRenderer from '@/components/hermes/chat/MarkdownRenderer.vue'; import type { RoundtableConsensus } from '@hermes/shared'; defineProps<{ consensus: RoundtableConsensus }>()</script>
+<template><NCard class="consensus-card" title="共识结论"><template #header-extra><NTag type="success">{{ consensus.rounds }} 轮</NTag></template><MarkdownRenderer :content="consensus.finalAnswer || consensus.finalSolution || ''" /><NList v-if="consensus.risks?.length" bordered><NListItem v-for="risk in consensus.risks" :key="risk">风险: {{ risk }}</NListItem></NList></NCard></template>
+<style scoped>.consensus-card{border-top:3px solid #22c55e}</style>

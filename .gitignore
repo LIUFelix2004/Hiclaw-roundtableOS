@@ -11,3 +11,5 @@ Thumbs.db
 coverage/
 *.pdf
 packages/server/data/
+.claude/settings.local.json
+hermes-studio-explore/

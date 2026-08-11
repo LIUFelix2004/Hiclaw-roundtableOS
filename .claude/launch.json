@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "hermes-studio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "packages/hermes-studio",
+      "port": 8649,
+      "url": "http://localhost:8649",
+      "env": {
+        "HERMES_COMPETITION_MODE": "1",
+        "HERMES_COMPETITION_BACKEND_URL": "http://127.0.0.1:8648",
+        "HERMES_WEB_UI_DISABLE_GATEWAY_AUTOSTART": "1",
+        "HERMES_WEB_UI_DISABLE_SKILL_INJECTION": "1"
+      }
+    }
+  ]
+}

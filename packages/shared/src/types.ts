@@ -68,6 +68,7 @@ export type RollbackStrategy =
   | 'rerun'
   | 'human_escalation';
 
+// B's backend rollback result (full detail)
 export interface RollbackResult {
   taskId: string;
   agent: AgentRole;
@@ -81,12 +82,29 @@ export interface RollbackResult {
   duration: number;
 }
 
+// A's frontend rollback complete event (simplified for UI)
+export interface RollbackCompleteEvent {
+  taskId: string;
+  strategy: RollbackStrategy;
+  result: string;
+  fromModel?: string;
+  toModel?: string;
+}
+
+// B's backend human escalation (full detail)
 export interface RollbackHumanEscalation {
   taskId: string;
   agent: AgentRole;
   errorType: ErrorType;
   message: string;
   instructions: string;
+}
+
+// A's frontend human rollback event (simplified for UI)
+export interface RollbackHumanEvent {
+  taskId: string;
+  reason: string;
+  context?: string;
 }
 
 export interface RoundtableConfig {
@@ -113,7 +131,8 @@ export interface RoundtableSpeech {
 
 export interface RoundtableTask {
   agent: string;
-  objective: string;
+  target?: string;
+  objective?: string;
   input: string;
   expectedOutput: string;
   deadline?: string;
@@ -126,6 +145,7 @@ export interface RoundtableConsensus {
   disagreements: string[];
   finalSolution?: string;
   executionTasks?: RoundtableTask[];
+  tasks?: RoundtableTask[];
   risks?: string[];
 }
 
@@ -177,13 +197,16 @@ export interface AgentTraceRecord {
 }
 
 export interface AgentSnapshot {
-  snapshotId: string;
+  id?: string;
+  snapshotId?: string;
   taskId: string;
-  agent: AgentRole;
+  agent?: AgentRole;
+  label?: string;
   timestamp: number;
-  input: unknown;
+  input?: unknown;
   output?: unknown;
-  model: string;
+  data?: Record<string, unknown>;
+  model?: string;
   status?: TaskStatus;
   error?: unknown;
 }
