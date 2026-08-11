@@ -2,9 +2,9 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ShieldAlert } from 'lucide-react';
-import type { RollbackHumanEvent } from '@hermes/shared';
+import type { RollbackHumanView } from '@/lib/events';
 
-export function RollbackHumanDialog({ event, onRespond }: { event: RollbackHumanEvent | null; onRespond: (action: 'approve' | 'dismiss') => void }) {
+export function RollbackHumanDialog({ event, onRespond }: { event: RollbackHumanView | null; onRespond: (action: 'approve' | 'dismiss') => void }) {
   return (
     <Dialog open={Boolean(event)} onOpenChange={(open) => { if (!open) onRespond('dismiss'); }}>
       <DialogContent>

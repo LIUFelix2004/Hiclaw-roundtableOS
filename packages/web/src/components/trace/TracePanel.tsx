@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { CheckCircle2, CircleAlert, Clock3, Coins, Copy, FileDiff, X } from 'lucide-react';
-import type { AgentSnapshot, TraceSpan } from '@hermes/shared';
+import type { TraceSpan } from '@hermes/shared';
+import type { SnapshotView } from '@/lib/events';
 
 const phaseLabels = ['START', 'CONTEXT_BUILD', 'MODEL_SELECTED', 'LLM_CALL', 'OUTPUT_VALIDATE', 'SUCCESS', 'FAIL'];
 
@@ -11,11 +12,11 @@ function duration(span: TraceSpan) {
   return `${Math.max(0, span.endTime - span.startTime)} ms`;
 }
 
-function snapshotText(snapshot?: AgentSnapshot) {
+function snapshotText(snapshot?: SnapshotView) {
   return snapshot ? JSON.stringify(snapshot.data, null, 2) : '';
 }
 
-export function TracePanel({ taskId, spans, snapshots, onClose }: { taskId: string; spans: TraceSpan[]; snapshots: AgentSnapshot[]; onClose: () => void }) {
+export function TracePanel({ taskId, spans, snapshots, onClose }: { taskId: string; spans: TraceSpan[]; snapshots: SnapshotView[]; onClose: () => void }) {
   const [leftSnapshot, setLeftSnapshot] = useState('');
   const [rightSnapshot, setRightSnapshot] = useState('');
   const ordered = useMemo(() => [...spans].sort((a, b) => a.startTime - b.startTime), [spans]);

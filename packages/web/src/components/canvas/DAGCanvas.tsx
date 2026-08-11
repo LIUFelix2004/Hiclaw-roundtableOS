@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactFlow, { Background, Controls, MiniMap, MarkerType, Panel, ReactFlowProvider, useEdgesState, useNodesState, useReactFlow, type Edge, type Node } from 'reactflow';
 import { toPng } from 'html-to-image';
 import 'reactflow/dist/style.css';
-import type { AgentSnapshot, AgentStatus, RollbackCompleteEvent, RollbackEvent, RollbackHumanEvent, SubTask, TraceSpan } from '@hermes/shared';
+import type { AgentSnapshot, AgentStatus, AgentTraceRecord, RollbackCompleteEvent, RollbackEvent, RollbackHumanEscalation, RollbackHumanEvent, RollbackResult, SubTask, TraceSpan } from '@hermes/shared';
 import { useSocket } from '@/hooks/useSocket';
+import { toRollbackCompleteView, toRollbackHumanView, toSnapshotView, toTraceSpan, type RollbackCompleteView, type RollbackHumanView, type SnapshotView } from '@/lib/events';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AgentNode } from './AgentNode';
@@ -49,10 +50,10 @@ function CanvasInner() {
   const [tasks, setTasks] = useState<SubTask[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [traceByTask, setTraceByTask] = useState<Record<string, TraceSpan[]>>({});
-  const [snapshotsByTask, setSnapshotsByTask] = useState<Record<string, AgentSnapshot[]>>({});
+  const [snapshotsByTask, setSnapshotsByTask] = useState<Record<string, SnapshotView[]>>({});
   const [rollbackStarted, setRollbackStarted] = useState<RollbackEvent | null>(null);
-  const [rollbackCompleted, setRollbackCompleted] = useState<RollbackCompleteEvent | null>(null);
-  const [humanRollback, setHumanRollback] = useState<RollbackHumanEvent | null>(null);
+  const [rollbackCompleted, setRollbackCompleted] = useState<RollbackCompleteView | null>(null);
+  const [humanRollback, setHumanRollback] = useState<RollbackHumanView | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState<SubTask>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<StatusEdgeData>([]);
@@ -85,14 +86,17 @@ function CanvasInner() {
         return next;
       });
     };
-    const rollbackComplete = (event: RollbackCompleteEvent) => { setRollbackCompleted(event); setRollbackStarted(null); };
-    const rollbackHuman = (event: RollbackHumanEvent) => setHumanRollback(event);
-    const trace = (payload: TraceSpan | { taskId: string; span: TraceSpan }) => {
-      const span = 'span' in payload ? payload.span : payload;
+    const rollbackComplete = (event: RollbackResult | RollbackCompleteEvent) => { setRollbackCompleted(toRollbackCompleteView(event)); setRollbackStarted(null); };
+    const rollbackHuman = (event: RollbackHumanEscalation | RollbackHumanEvent) => setHumanRollback(toRollbackHumanView(event));
+    const trace = (payload: AgentTraceRecord | TraceSpan | { taskId: string; span: TraceSpan }) => {
+      const span = toTraceSpan(payload);
       const taskId = 'span' in payload ? payload.taskId : span.traceId;
       setTraceByTask((current) => ({ ...current, [taskId]: [...(current[taskId] ?? []).filter((item) => item.id !== span.id), span] }));
     };
-    const snapshot = (event: AgentSnapshot) => setSnapshotsByTask((current) => ({ ...current, [event.taskId]: [...(current[event.taskId] ?? []).filter((item) => item.id !== event.id), event] }));
+    const snapshot = (event: AgentSnapshot) => {
+      const view = toSnapshotView(event);
+      setSnapshotsByTask((current) => ({ ...current, [event.taskId]: [...(current[event.taskId] ?? []).filter((item) => item.id !== view.id), view] }));
+    };
     on('task:plan', plan);
     on('agent:status', status);
     on('rollback:start', rollbackStart); on('rollback:complete', rollbackComplete); on('rollback:human', rollbackHuman); on('agent:trace', trace); on('agent:snapshot', snapshot);

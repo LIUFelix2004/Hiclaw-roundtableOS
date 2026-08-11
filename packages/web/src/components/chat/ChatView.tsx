@@ -2,8 +2,9 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, Bot, LoaderCircle } from 'lucide-react';
-import type { AgentOutput, AgentStatus, RollbackCompleteEvent, RollbackEvent, SubTask } from '@hermes/shared';
+import type { AgentOutput, AgentStatus, RollbackCompleteEvent, RollbackEvent, RollbackResult, SubTask } from '@hermes/shared';
 import { useSocket } from '@/hooks/useSocket';
+import { toRollbackCompleteView, type RollbackCompleteView } from '@/lib/events';
 import { MessageBubble } from './MessageBubble';
 import { AgentStatusBar } from './AgentStatusBar';
 import { RollbackNotice } from '@/components/rollback/RollbackNotice';
@@ -17,7 +18,7 @@ export function ChatView() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [rollbackStarted, setRollbackStarted] = useState<RollbackEvent | null>(null);
-  const [rollbackCompleted, setRollbackCompleted] = useState<RollbackCompleteEvent | null>(null);
+  const [rollbackCompleted, setRollbackCompleted] = useState<RollbackCompleteView | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const activeStreams = useMemo(() => new Set(messages.filter((m) => m.type === 'stream' && m.streaming).map((m) => m.taskId)), [messages]);
 
@@ -29,7 +30,7 @@ export function ChatView() {
     const output = (event: AgentOutput) => setMessages((current) => [...current.map((item) => item.taskId === event.taskId && item.type === 'stream' ? { ...item, streaming: false } : item), { id: `output-${event.taskId}-${Date.now()}`, type: 'output', taskId: event.taskId, agent: event.agent, content: event.content, model: `${event.tokens} tokens` }]);
     const error = ({ message }: { message: string }) => setMessages((current) => [...current, { id: `error-${Date.now()}`, type: 'error', content: message }]);
     const rollbackStart = (event: RollbackEvent) => { setRollbackStarted(event); setRollbackCompleted(null); };
-    const rollbackComplete = (event: RollbackCompleteEvent) => { setRollbackCompleted(event); setRollbackStarted(null); };
+    const rollbackComplete = (event: RollbackResult | RollbackCompleteEvent) => { setRollbackCompleted(toRollbackCompleteView(event)); setRollbackStarted(null); };
     on('task:plan', plan); on('agent:status', status); on('agent:stream', stream); on('agent:output', output); on('agent:error', error); on('error', error); on('rollback:start', rollbackStart); on('rollback:complete', rollbackComplete);
     return () => { off('task:plan', plan); off('agent:status', status); off('agent:stream', stream); off('agent:output', output); off('agent:error', error); off('error', error); off('rollback:start', rollbackStart); off('rollback:complete', rollbackComplete); };
   }, [on, off]);

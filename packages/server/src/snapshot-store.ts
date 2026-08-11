@@ -30,7 +30,8 @@ export class SnapshotStore {
   stats(): { total: number; byAgent: Record<string, number> } {
     const byAgent: Record<string, number> = {};
     for (const snapshot of this.snapshots.values()) {
-      byAgent[snapshot.agent] = (byAgent[snapshot.agent] ?? 0) + 1;
+      const agent = snapshot.agent ?? 'unknown';
+      byAgent[agent] = (byAgent[agent] ?? 0) + 1;
     }
     return { total: this.snapshots.size, byAgent };
   }
@@ -39,8 +40,8 @@ export class SnapshotStore {
     this.snapshots.clear();
   }
 
-  private key(taskId: string, agent: AgentRole): string {
-    return `${taskId}:${agent}`;
+  private key(taskId: string, agent?: AgentRole): string {
+    return `${taskId}:${agent ?? 'unknown'}`;
   }
 }
 

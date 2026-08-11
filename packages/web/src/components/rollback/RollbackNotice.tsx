@@ -2,11 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { CheckCircle2, CircleAlert, RotateCcw, ShieldAlert } from 'lucide-react';
-import type { RollbackCompleteEvent, RollbackEvent, RollbackStrategy } from '@hermes/shared';
+import type { RollbackEvent, RollbackStrategy } from '@hermes/shared';
+import type { RollbackCompleteView } from '@/lib/events';
 
 const labels: Record<RollbackStrategy, string> = { snapshot_restore: 'Snapshot restore', model_switch: 'Model switch', rerun: 'Rerun task', human_escalation: 'Human escalation' };
 
-export function RollbackNotice({ started, completed }: { started?: RollbackEvent | null; completed?: RollbackCompleteEvent | null }) {
+export function RollbackNotice({ started, completed }: { started?: RollbackEvent | null; completed?: RollbackCompleteView | null }) {
   if (!started && !completed) return null;
   const isComplete = Boolean(completed);
   return (
