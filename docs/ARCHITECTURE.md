@@ -34,7 +34,7 @@ Hermes AgentOS 的目标不是证明“某个 Agent 很聪明”，而是证明�
 | 模块 | 路径 | 职责 |
 |---|---|---|
 | 服务入口 | `packages/server/src/index.ts` | Koa 路由、Socket.IO 事件绑定、活动任务去重、统计埋点 |
-| Planner | `packages/server/src/planner.ts` | 规则型任务拆解，输出 `SubTask[]` 依赖图 |
+| Planner | `packages/server/src/planner.ts` | LLM 驱动任务拆解，规则兜底，输出 `SubTask[]` 依赖图 |
 | TaskScheduler | `packages/server/src/scheduler.ts` | DAG 拓扑执行、并行批次、输出防火墙、Rollback 集成 |
 | SkillAgent 运行时 | `packages/server/src/agents/skill-agent.ts` | Trace/Snapshot/重试/错误分类/经验记录的统一运行时 |
 | Skill 模块 | `packages/server/src/agents/*` | data/research/analyst/writer/moderator/validator/rollback |
@@ -42,7 +42,7 @@ Hermes AgentOS 的目标不是证明“某个 Agent 很聪明”，而是证明�
 | Rollback 引擎 | `packages/server/src/rollback-engine.ts` | 快照恢复、模型切换、重跑、人工兜底 |
 | Experience Memory | `packages/server/src/experience-memory.ts` | JSON 持久化成功/失败记录，影响模型选择 |
 | Snapshot Store | `packages/server/src/snapshot-store.ts` | 进程内快照存取 |
-| LLM/Mock 层 | `packages/server/src/llm.ts` | 模型路由、按角色模型回退链、离线 Mock 数据集 |
+| LLM/Mock 层 | `packages/server/src/llm.ts` | 多 Provider 模型路由、按角色模型回退链、真实 usage Token 计数、离线 Mock 数据集 |
 | Dashboard 统计 | `packages/server/src/stats.ts` | Token/成本/健康度/圆桌统计 |
 | Demo 数据 | `packages/server/src/demo/new-energy.ts` | 新能源战略分析 Prompt 与预置数据 |
 | 共享协议 | `packages/shared/src/types.ts`、`events.ts` | 前后端唯一契约源 |
@@ -64,7 +64,7 @@ sequenceDiagram
 
   U->>I: task:create { message }
   I->>P: planner.plan(message)
-  P-->>I: task:plan { tasks: SubTask[] }
+  P-->>I: task:plan { tasks, reasoning, source }
   I->>S: scheduler.execute(tasks, message, ctx)
   loop 每层可并行任务
     S->>A: agent.execute(...)
@@ -84,6 +84,7 @@ sequenceDiagram
 ```
 
 关键点：
+- Planner 在真实模型下返回 LLM 拆解原因与来源（`source: llm`）；Mock 或 LLM 输出非法时自动回退规则拆解（`source: rules`）。
 - Scheduler 按依赖关系做拓扑分层，同一层任务并行执行。
 - 每个 Agent 产物在进入 DAG 状态前必须通过 Validator；失败时先走 Rollback，不直接污染下游。
 - 每次执行（含 Rollback 重跑）都会写入 Experience Memory。
@@ -174,7 +175,7 @@ START
 
 ## 6. 调度与并发模型
 
-- Planner 输出 `SubTask[]`，每个任务包含 `id / title / agent / dependsOn / status`。
+- Planner 输出 `SubTask[]`，每个任务包含 `id / title / agent / dependsOn / status`；LLM 计划 JSON 会经过角色白名单、依赖索引与拓扑顺序校验。
 - Scheduler 使用拓扑分层：无依赖的先执行，同层 `Promise.all` 并行。
 - 每个结果先执行 `validateWithRecovery`，再写入 `completed`，确保输出防火墙在 DAG 状态前生效。
 - 活动任务/圆桌按 socket 维度去重，防止同一连接重复执行。
@@ -200,9 +201,11 @@ Rollback 策略优先级：
 
 ## 8. LLM 与 Mock
 
-- 每个 Agent 角色有默认模型与回退链（`MODEL_FALLBACKS`）。
-- `chat()` 支持 `model` 覆盖参数，Rollback 重跑时显式指定目标模型。
-- `MOCK_LLM=1` 或未配置 `OPENAI_API_KEY` 时自动启用 Mock。
+- 每个 Agent 角色有默认模型与回退链（`MODEL_FALLBACKS`），Planner 也有独立模型配置。
+- 支持 OpenAI / Anthropic / DeepSeek 三种 Provider：`LLM_PROVIDER=auto` 按已配置 Key 自动选择，也可用 `openai:` / `anthropic:` / `deepseek:` 模型前缀强制路由。
+- 流式调用读取 API usage（OpenAI `stream_options.include_usage`、Anthropic `message_start/message_delta`），输出真实 `inputTokens / outputTokens`；网关未返回 usage 时使用中英文字符感知估算兜底。
+- `chat()` 支持 `model` 覆盖参数，Rollback 重跑时可跨 Provider 切换模型。
+- `MOCK_LLM=1` 或未配置任何 Provider Key 时自动启用 Mock。
 - Mock 输出按话题选择数据集：新能源（储能/光伏/新能源车）与 AI 服务器产业链，所有输出符合对应 Schema。
 
 ## 9. 可观测与 Dashboard

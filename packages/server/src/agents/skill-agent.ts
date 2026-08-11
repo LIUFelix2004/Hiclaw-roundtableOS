@@ -147,6 +147,9 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           traceId,
           agent: this.role,
           model: result.model,
+          provider: result.provider,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
           tokens: result.tokens,
           cost: result.cost,
           status: 'running',
@@ -178,6 +181,9 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           cost: result.cost,
           duration,
           model: result.model,
+          provider: result.provider,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
         };
         ctx.emit('agent:output', output);
 
@@ -205,6 +211,9 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           traceId,
           agent: this.role,
           model: result.model,
+          provider: result.provider,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
           tokens: result.tokens,
           cost: result.cost,
           duration,
@@ -227,6 +236,9 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           cost: result.cost,
           duration,
           model: result.model,
+          provider: result.provider,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
         };
       } catch (err: any) {
         err.model = selectedModel;

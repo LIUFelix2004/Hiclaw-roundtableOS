@@ -1,19 +1,60 @@
-import type { SubTask, AgentRole } from '@hermes/shared';
+import type { AgentRole, SubTask } from '@hermes/shared';
 import type { PlanResult } from './types';
 import { v4 as uuid } from 'uuid';
+import { chat, isMockEnabled } from './llm';
+
+const EXECUTABLE_ROLES: readonly AgentRole[] = ['data', 'research', 'analyst', 'writer'];
+const MAX_TASKS = 6;
+
+const PLANNER_SYSTEM_PROMPT = `你是 Hermes AgentOS 的 LLM 任务规划器。
+把用户请求拆成 1-6 个可并行或串行执行的子任务 DAG。
+可用 agent 只能是 data / research / analyst / writer。
+tasks 必须按拓扑顺序排列；dependsOn 是 0-based 索引数组，只能引用排在当前任务之前的任务索引。
+只输出 JSON，不要 Markdown 代码块：
+{"reasoning":"一句话说明拆解思路","tasks":[{"title":"子任务标题","agent":"data","dependsOn":[]}]}`;
 
 /**
- * Planner: decomposes a user message into a DAG of SubTasks,
- * assigning each subtask to the appropriate agent role.
+ * Planner: decomposes a user message into a DAG of SubTasks.
  *
- * Phase 1 stub uses rule-based decomposition.
- * Phase 2 will use an LLM-based planner.
+ * Primary path is LLM-driven JSON decomposition; the deterministic
+ * rule-based pipeline remains as an offline/fallback path.
  */
 export class Planner {
   /**
    * Decompose a user message into subtasks with dependencies.
    */
-  plan(message: string, _context?: string): PlanResult {
+  async plan(message: string, context = ''): Promise<PlanResult> {
+    if (!isMockEnabled() && process.env.PLANNER_LLM !== '0') {
+      try {
+        const result = await chat({
+          role: 'planner',
+          systemPrompt: PLANNER_SYSTEM_PROMPT,
+          messages: [
+            {
+              role: 'user',
+              content: `任务：${message}\n上下文：${context || '无'}`,
+            },
+          ],
+          temperature: 0.2,
+          maxTokens: 1200,
+          timeoutMs: 20000,
+        });
+        const llmPlan = parsePlannerPlan(result.content);
+        if (llmPlan) {
+          console.log(
+            `[planner] LLM 拆解 ${llmPlan.tasks.length} 个子任务: ${llmPlan.reasoning}`,
+          );
+          return llmPlan;
+        }
+        console.warn('[planner] LLM 输出无法解析，回退规则拆解');
+      } catch (err: any) {
+        console.warn(`[planner] LLM 拆解失败，回退规则拆解: ${err?.message ?? err}`);
+      }
+    }
+    return this.planRules(message);
+  }
+
+  private planRules(message: string): PlanResult {
     const lower = message.toLowerCase();
     const tasks: SubTask[] = [];
 
@@ -76,6 +117,7 @@ export class Planner {
     return {
       tasks,
       reasoning: `Detected: data=${needsData} research=${needsResearch} analysis=${needsAnalysis} writing=${needsWriting}`,
+      source: 'rules',
     };
   }
 
@@ -88,6 +130,7 @@ export class Planner {
         this.makeTask(ids.w, 'Generate Report', 'writer', [ids.r, ids.a]),
       ],
       reasoning: 'Default pipeline: research → analyze → write',
+      source: 'rules',
     };
   }
 
@@ -109,4 +152,54 @@ export class Planner {
   private escapeRegex(s: string): string {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
+}
+
+/**
+ * Parse and validate the LLM planner JSON.
+ *
+ * Tasks must be listed in topological order; dependencies are 0-based
+ * indexes that may only reference earlier tasks. Invalid output returns
+ * null so the caller can fall back to the deterministic rule planner.
+ */
+export function parsePlannerPlan(raw: string): PlanResult | null {
+  const cleaned = raw.replace(/```json|```/gi, '').trim();
+  let parsed: any;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    return null;
+  }
+  const specs = Array.isArray(parsed?.tasks) ? parsed.tasks : null;
+  if (!specs || specs.length === 0 || specs.length > MAX_TASKS) return null;
+
+  const tasks: SubTask[] = [];
+  const idByIndex = new Map<number, string>();
+  for (let i = 0; i < specs.length; i++) {
+    const spec = specs[i];
+    const title = typeof spec?.title === 'string' ? spec.title.trim() : '';
+    const agent = spec?.agent;
+    if (!title || !EXECUTABLE_ROLES.includes(agent)) return null;
+    const id = uuid();
+    idByIndex.set(i, id);
+    tasks.push({ id, title, agent, dependsOn: [], status: 'pending' });
+  }
+
+  for (let i = 0; i < specs.length; i++) {
+    const deps = Array.isArray(specs[i]?.dependsOn) ? specs[i].dependsOn : [];
+    const resolved = new Set<string>();
+    for (const dep of deps) {
+      if (!Number.isInteger(dep) || dep < 0 || dep >= i) return null;
+      resolved.add(idByIndex.get(dep)!);
+    }
+    tasks[i].dependsOn = [...resolved];
+  }
+
+  return {
+    tasks,
+    reasoning:
+      typeof parsed.reasoning === 'string' && parsed.reasoning.trim()
+        ? parsed.reasoning.trim()
+        : 'LLM planner 自动拆解任务 DAG',
+    source: 'llm',
+  };
 }

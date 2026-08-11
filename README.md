@@ -4,7 +4,7 @@
 
 ## 核心能力
 
-- **任务拆解与调度**：Planner 将用户请求拆为带依赖关系的子任务，Scheduler 按 DAG 并行/串行执行。
+- **任务拆解与调度**：Planner 以 LLM 驱动为主、规则拆解兜底，将用户请求拆为带依赖关系的子任务，Scheduler 按 DAG 并行/串行执行。
 - **Skill Agent 体系**：data / research / analyst / writer / moderator / validator / rollback 均以统一 Skill 模板实现，共享 Trace、Snapshot、重试与错误分类运行时。
 - **AI 圆桌引擎**：多 Agent 围绕议题多轮发言、质疑、补充，由 Moderator 收敛并输出带执行计划的共识。
 - **输出防火墙**：Validator 对每个进入 DAG 状态或共识发布的产物执行四维校验，失败码与 ErrorType 对齐。
@@ -20,7 +20,7 @@
 | 前端 | Next.js 16 + React + Socket.IO Client |
 | 后端 | Koa 2 + Socket.IO + tsx |
 | 共享契约 | pnpm workspace 内 `@hermes/shared` 类型/事件协议包 |
-| LLM 接入 | OpenAI 兼容网关（NewAPI / 任意兼容端点），支持按 Agent 配置模型 |
+| LLM 接入 | OpenAI / Anthropic / DeepSeek 多 Provider 路由（`LLM_PROVIDER` 或模型前缀），流式 usage 真实 Token 计数，支持按 Agent 配置模型 |
 | 数据 | 内存快照 + JSON Experience Memory |
 
 ## 仓库结构
@@ -56,7 +56,7 @@ Copy-Item .env.example .env
 pnpm dev:server
 ```
 
-未配置 `OPENAI_API_KEY` 时会自动进入 Mock 模式，服务启动于 `http://localhost:8648`。
+未配置任何模型 Key（OpenAI / Anthropic / DeepSeek）时会自动进入 Mock 模式，服务启动于 `http://localhost:8648`。
 
 前端：
 
@@ -79,7 +79,13 @@ pnpm --filter @hermes/server self-test
 | `MOCK_LLM` | 置为 `1` 强制使用内置演示数据 | 自动 |
 | `OPENAI_API_KEY` | 真实模型网关 Key | 无 |
 | `OPENAI_BASE_URL` | OpenAI 兼容网关地址 | 无 |
-| `MODEL_DATA` / `MODEL_RESEARCH` / `MODEL_ANALYST` / `MODEL_WRITER` / `MODEL_MODERATOR` / `MODEL_VALIDATOR` / `MODEL_ROLLBACK` | 各 Agent 默认模型 | 按角色 |
+| `LLM_PROVIDER` | Provider 路由：`auto` / `openai` / `anthropic` / `deepseek` | `auto` |
+| `ANTHROPIC_API_KEY` | Anthropic Messages API Key | 无 |
+| `ANTHROPIC_BASE_URL` | Anthropic 网关地址 | `https://api.anthropic.com` |
+| `DEEPSEEK_API_KEY` | DeepSeek API Key | 无 |
+| `DEEPSEEK_BASE_URL` | DeepSeek 兼容地址 | `https://api.deepseek.com` |
+| `MODEL_DATA` / `MODEL_RESEARCH` / `MODEL_ANALYST` / `MODEL_WRITER` / `MODEL_MODERATOR` / `MODEL_VALIDATOR` / `MODEL_ROLLBACK` / `MODEL_PLANNER` | 各 Agent 默认模型 | 按角色 |
+| `PLANNER_LLM` | 置为 `0` 关闭 LLM 驱动的 Planner | 启用 |
 | `HERMES_DATA_DIR` | Experience Memory JSON 目录 | `packages/server/data` |
 | `HERMES_EXPERIENCE_FILE` | Experience Memory 文件路径 | `data/experience.json` |
 

@@ -4,7 +4,8 @@
  * Tests the core scheduling logic without requiring LLM API keys.
  * Run with: npx tsx packages/server/src/self-test.ts
  */
-import { Planner } from './planner';
+import { Planner, parsePlannerPlan } from './planner';
+import { estimateTokens, resolveProvider } from './llm';
 import { TaskScheduler } from './scheduler';
 import type { AgentRole, SubTask } from '@hermes/shared';
 import { AnalystAgent, DataAgent, ResearchAgent, ValidatorAgent, WriterAgent } from './agents';
@@ -28,39 +29,6 @@ function assert(condition: boolean, message: string) {
   }
   console.log(`  PASS: ${message}`);
 }
-
-// ── Test 1: Planner decomposition ──
-console.log('\n=== Test 1: Planner Decomposition ===');
-
-const planner = new Planner();
-
-// Case A: Data + Analysis + Writing
-const planA = planner.plan('collect data about market trends and analyze them, then write a report');
-assert(planA.tasks.length === 4, `Should have 4 tasks, got ${planA.tasks.length}`);
-const rolesA = planA.tasks.map(t => t.agent);
-assert(rolesA.includes('data'), 'Should include data agent');
-assert(rolesA.includes('analyst'), 'Should include analyst agent');
-assert(rolesA.includes('writer'), 'Should include writer agent');
-
-// Case B: Research only
-const planB = planner.plan('research the latest AI news');
-assert(planB.tasks.length === 1, `Should have 1 task, got ${planB.tasks.length}`);
-assert(planB.tasks[0].agent === 'research', 'Should be research agent');
-
-// Case C: Default pipeline (no keywords detected)
-const planC = planner.plan('hello world tell me something interesting');
-assert(planC.tasks.length === 3, `Default should have 3 tasks, got ${planC.tasks.length}`);
-assert(planC.tasks[0].agent === 'research', 'First should be research');
-assert(planC.tasks[1].agent === 'analyst', 'Second should be analyst');
-assert(planC.tasks[2].agent === 'writer', 'Third should be writer');
-
-// Verify DAG dependencies in default pipeline
-assert(planC.tasks[0].dependsOn.length === 0, 'Research should have no deps');
-assert(planC.tasks[1].dependsOn.includes(planC.tasks[0].id), 'Analyst should depend on research');
-assert(planC.tasks[2].dependsOn.includes(planC.tasks[0].id), 'Writer should depend on research');
-assert(planC.tasks[2].dependsOn.includes(planC.tasks[1].id), 'Writer should depend on analyst');
-
-console.log('  Planner: all decomposition tests passed');
 
 // ── Test 2: Scheduler DAG topology ──
 console.log('\n=== Test 2: Scheduler DAG Ordering ===');
@@ -113,16 +81,127 @@ for (const role of roles) {
 
 console.log('  Scheduler: agent registry passed');
 
-// ── Test 5: Chinese task decomposition ──
-console.log('\n=== Test 5: Chinese Decomposition ===');
+// ── Test 1 + 5: Planner (rules fallback + LLM JSON parsing) ──
+console.log('\n=== Test 1: Planner Decomposition ===');
 
-const planCN = planner.plan('自动生成一份带数据的行业分析周报');
-assert(planCN.tasks.length === 4, `Chinese plan should have 4 tasks, got ${planCN.tasks.length}`);
-const rolesCN = planCN.tasks.map((t) => t.agent);
-assert(
-  rolesCN.includes('data') && rolesCN.includes('research') && rolesCN.includes('analyst') && rolesCN.includes('writer'),
-  'Chinese plan should include all four agent roles',
-);
+async function testPlanner(): Promise<void> {
+  const planner = new Planner();
+
+  // Case A: Data + Analysis + Writing
+  const planA = await planner.plan(
+    'collect data about market trends and analyze them, then write a report',
+  );
+  assert(planA.tasks.length === 4, `Should have 4 tasks, got ${planA.tasks.length}`);
+  const rolesA = planA.tasks.map((t) => t.agent);
+  assert(rolesA.includes('data'), 'Should include data agent');
+  assert(rolesA.includes('analyst'), 'Should include analyst agent');
+  assert(rolesA.includes('writer'), 'Should include writer agent');
+
+  // Case B: Research only
+  const planB = await planner.plan('research the latest AI news');
+  assert(planB.tasks.length === 1, `Should have 1 task, got ${planB.tasks.length}`);
+  assert(planB.tasks[0].agent === 'research', 'Should be research agent');
+
+  // Case C: Default pipeline (no keywords detected)
+  const planC = await planner.plan('hello world tell me something interesting');
+  assert(planC.tasks.length === 3, `Default should have 3 tasks, got ${planC.tasks.length}`);
+  assert(planC.tasks[0].agent === 'research', 'First should be research');
+  assert(planC.tasks[1].agent === 'analyst', 'Second should be analyst');
+  assert(planC.tasks[2].agent === 'writer', 'Third should be writer');
+  assert(planC.source === 'rules', 'Mock mode should use rule fallback');
+
+  // Verify DAG dependencies in default pipeline
+  assert(planC.tasks[0].dependsOn.length === 0, 'Research should have no deps');
+  assert(
+    planC.tasks[1].dependsOn.includes(planC.tasks[0].id),
+    'Analyst should depend on research',
+  );
+  assert(
+    planC.tasks[2].dependsOn.includes(planC.tasks[0].id),
+    'Writer should depend on research',
+  );
+  assert(
+    planC.tasks[2].dependsOn.includes(planC.tasks[1].id),
+    'Writer should depend on analyst',
+  );
+
+  // Case D: Chinese decomposition
+  const planCN = await planner.plan('自动生成一份带数据的行业分析周报');
+  assert(planCN.tasks.length === 4, `Chinese plan should have 4 tasks, got ${planCN.tasks.length}`);
+  const rolesCN = planCN.tasks.map((t) => t.agent);
+  assert(
+    rolesCN.includes('data') &&
+      rolesCN.includes('research') &&
+      rolesCN.includes('analyst') &&
+      rolesCN.includes('writer'),
+    'Chinese plan should include all four agent roles',
+  );
+
+  console.log('  Planner: rule decomposition tests passed');
+
+  // LLM plan JSON parsing/validation
+  const llmRaw = JSON.stringify({
+    reasoning: '先收集数据，再研究与分析，最后成稿',
+    tasks: [
+      { title: 'Gather Data', agent: 'data', dependsOn: [] },
+      { title: 'Research Topic', agent: 'research', dependsOn: [0] },
+      { title: 'Analyze Findings', agent: 'analyst', dependsOn: [1] },
+      { title: 'Generate Report', agent: 'writer', dependsOn: [0, 1, 2] },
+    ],
+  });
+  const llmPlan = parsePlannerPlan(llmRaw);
+  assert(llmPlan !== null && llmPlan.source === 'llm', 'LLM plan JSON should parse as llm source');
+  assert(llmPlan!.tasks.length === 4, 'LLM plan should have 4 tasks');
+  assert(llmPlan!.tasks[3].dependsOn.length === 3, 'LLM plan should resolve index dependencies');
+  assert(
+    parsePlannerPlan('{"tasks":[{"title":"x","agent":"moderator","dependsOn":[]}]}') === null,
+    'LLM plan with disallowed agent should be rejected',
+  );
+  assert(
+    parsePlannerPlan(
+      '{"tasks":[{"title":"x","agent":"data","dependsOn":[1]},{"title":"y","agent":"analyst","dependsOn":[]}]}',
+    ) === null,
+    'LLM plan with forward dependencies should be rejected',
+  );
+
+  // Provider routing + token estimation
+  const savedEnv = {
+    provider: process.env.LLM_PROVIDER,
+    openai: process.env.OPENAI_API_KEY,
+    anthropic: process.env.ANTHROPIC_API_KEY,
+    deepseek: process.env.DEEPSEEK_API_KEY,
+  };
+  process.env.LLM_PROVIDER = 'auto';
+  process.env.OPENAI_API_KEY = 'sk-self-test';
+  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.DEEPSEEK_API_KEY;
+  try {
+    assert(
+      resolveProvider('deepseek:deepseek-chat') === 'deepseek',
+      'deepseek prefix should route to deepseek',
+    );
+    assert(
+      resolveProvider('anthropic:claude-sonnet-4-20250514') === 'anthropic',
+      'anthropic prefix should route to anthropic',
+    );
+    assert(resolveProvider('gpt-4o') === 'openai', 'unprefixed model should default to openai');
+    assert(estimateTokens('hello world') > 0, 'estimateTokens should return positive count');
+    assert(
+      estimateTokens('储能新增装机量同比大幅增长') > 0,
+      'Chinese estimateTokens should return positive count',
+    );
+  } finally {
+    process.env.LLM_PROVIDER = savedEnv.provider;
+    if (savedEnv.openai !== undefined) process.env.OPENAI_API_KEY = savedEnv.openai;
+    else delete process.env.OPENAI_API_KEY;
+    if (savedEnv.anthropic !== undefined) process.env.ANTHROPIC_API_KEY = savedEnv.anthropic;
+    else delete process.env.ANTHROPIC_API_KEY;
+    if (savedEnv.deepseek !== undefined) process.env.DEEPSEEK_API_KEY = savedEnv.deepseek;
+    else delete process.env.DEEPSEEK_API_KEY;
+  }
+
+  console.log('  Planner: LLM JSON parse + provider routing passed');
+}
 
 // ── Test 6: Mock end-to-end chain (no network) ──
 console.log('\n=== Test 6: Mock End-to-End Chain ===');
@@ -137,6 +216,7 @@ async function testMockE2E(): Promise<void> {
     },
   };
 
+  const planCN = await new Planner().plan('自动生成一份带数据的行业分析周报');
   const results = await scheduler.execute(planCN.tasks, '自动生成一份带数据的行业分析周报', ctx as any);
   assert(results.length === 4, `E2E should return 4 results, got ${results.length}`);
   assert(results.every((r) => r.output.trim().length > 0), 'Every agent should produce non-empty output');
@@ -317,7 +397,7 @@ async function testValidator(): Promise<void> {
       failEvents.push(event);
     },
   };
-  const injectPlan = planner.plan('收集数据 FAIL_INJECT');
+  const injectPlan = await new Planner().plan('收集数据 FAIL_INJECT');
   let rejected = false;
   try {
     await scheduler.execute(injectPlan.tasks, '收集数据 FAIL_INJECT', failCtx as any);
@@ -534,7 +614,8 @@ async function testDemoData(): Promise<void> {
   console.log('\n=== All self-tests passed ===\n');
 }
 
-testMockE2E()
+testPlanner()
+  .then(testMockE2E)
   .then(testAnalystSkill)
   .then(testAllSkills)
   .then(testRoundtable)

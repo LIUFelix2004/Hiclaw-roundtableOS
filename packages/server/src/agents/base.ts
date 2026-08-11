@@ -59,6 +59,10 @@ export abstract class BaseAgent {
           tokens: result.tokens,
           cost: result.cost,
           duration: Date.now() - startTime,
+          model: result.model,
+          provider: result.provider,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
         };
         ctx.emit('agent:output', output);
         this.emitStatus(taskId, 'success', 100, ctx);
@@ -70,6 +74,10 @@ export abstract class BaseAgent {
           tokens: result.tokens,
           cost: result.cost,
           duration: Date.now() - startTime,
+          model: result.model,
+          provider: result.provider,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
         };
       } catch (err: any) {
         lastError = err;

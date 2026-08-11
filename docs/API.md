@@ -23,6 +23,7 @@
   "status": "ok",
   "service": "hermes-agentos-server",
   "mock": true,
+  "provider": "openai",
   "uptime": 12.34
 }
 ```
@@ -178,9 +179,13 @@ Planner 拆解结果，前端用于渲染 DAG。
       "dependsOn": [],
       "status": "pending"
     }
-  ]
+  ],
+  "reasoning": "先收集数据，再研究与分析，最后成稿",
+  "source": "llm"
 }
 ```
+
+`source` 取值：`llm`（LLM Planner 拆解）或 `rules`（规则兜底 / 离线 Mock）。
 
 ### `agent:status`
 
@@ -210,9 +215,14 @@ Agent 结构化输出。
   "tokens": 500,
   "cost": 0.0012,
   "duration": 3200,
-  "model": "gpt-4o"
+  "model": "gpt-4o",
+  "provider": "openai",
+  "inputTokens": 240,
+  "outputTokens": 260
 }
 ```
+
+`provider` 取值：`openai | anthropic | deepseek | mock`；真实模型调用时 `inputTokens / outputTokens` 来自 API usage，Mock 或网关未返回 usage 时为估算值。
 
 ### `agent:stream`
 
@@ -235,6 +245,9 @@ Agent 结构化输出。
   "traceId": "trace_task_1720000000000_1720000000000",
   "agent": "analyst",
   "model": "gpt-4o",
+  "provider": "openai",
+  "inputTokens": 240,
+  "outputTokens": 260,
   "tokens": 500,
   "cost": 0.0012,
   "duration": 3200,
@@ -445,6 +458,7 @@ roundtable:start
 
 ## 6. 错误与限制
 
+- LLM Provider 通过 `LLM_PROVIDER=auto|openai|anthropic|deepseek` 或模型前缀（如 `deepseek:deepseek-chat`、`anthropic:claude-sonnet-4-20250514`）路由；`auto` 按已配置 Key 顺序选择 Anthropic > DeepSeek > OpenAI。
 - 同一 Socket 连接同一时间只允许一个 `task:create` 或 `roundtable:start` 运行，重复发起会收到 `error`。
 - Validator 连续失败且 Rollback 无法恢复时，任务失败并发出 `rollback:human`，不会把失败产物写入 DAG 状态。
-- 未配置模型 Key 时自动进入 Mock 模式；`MOCK_LLM=1` 可强制 Mock。
+- 未配置任何模型 Key 时自动进入 Mock 模式；`MOCK_LLM=1` 可强制 Mock。

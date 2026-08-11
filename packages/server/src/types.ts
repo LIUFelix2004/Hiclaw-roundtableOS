@@ -30,6 +30,9 @@ export interface AgentResult {
   cost: number;
   duration: number;
   model?: string;
+  provider?: string;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 /**
@@ -65,6 +68,7 @@ export interface SkillDefinition {
 export interface PlanResult {
   tasks: SubTask[];
   reasoning: string;
+  source?: 'llm' | 'rules';
 }
 
 export interface ExecutionContext {

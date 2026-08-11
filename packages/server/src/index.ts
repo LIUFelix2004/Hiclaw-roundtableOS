@@ -12,7 +12,7 @@ import type {
 import { Planner } from './planner';
 import { TaskScheduler } from './scheduler';
 import type { ExecutionContext } from './types';
-import { isMockEnabled } from './llm';
+import { isMockEnabled, resolveProvider } from './llm';
 import { RoundtableEngine } from './roundtable-engine';
 import type { SkillAgent } from './agents/skill-agent';
 import { statsService } from './stats';
@@ -29,6 +29,7 @@ app.use(async (ctx, next) => {
           status: 'ok',
           service: 'hermes-agentos-server',
           mock: isMockEnabled(),
+          provider: resolveProvider(),
           uptime: process.uptime(),
         };
         return;
@@ -108,11 +109,18 @@ io.on('connection', (socket: Socket) => {
 
     try {
       // 1. Planner decomposes the message
-      const plan = planner.plan(data.message);
-      console.log(`[planner] ${plan.tasks.length} subtasks:`, plan.reasoning);
+      const plan = await planner.plan(data.message);
+      console.log(
+        `[planner:${plan.source ?? 'rules'}] ${plan.tasks.length} subtasks:`,
+        plan.reasoning,
+      );
 
       // 2. Emit plan to client
-      socket.emit('task:plan', { tasks: plan.tasks });
+      socket.emit('task:plan', {
+        tasks: plan.tasks,
+        reasoning: plan.reasoning,
+        source: plan.source,
+      });
 
       // 3. Scheduler executes the DAG
       const results = await scheduler.execute(plan.tasks, data.message, ctx);

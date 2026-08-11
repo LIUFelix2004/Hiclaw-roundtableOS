@@ -21,7 +21,11 @@ export interface ClientToServerEvents {
 }
 
 export interface ServerToClientEvents {
-  'task:plan': (data: { tasks: SubTask[] }) => void;
+  'task:plan': (data: {
+    tasks: SubTask[];
+    reasoning?: string;
+    source?: 'llm' | 'rules';
+  }) => void;
   'agent:status': (data: AgentStatus) => void;
   'agent:output': (data: AgentOutput) => void;
   'agent:stream': (data: { taskId: string; agent: string; chunk: string }) => void;

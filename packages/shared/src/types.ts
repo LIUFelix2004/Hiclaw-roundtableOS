@@ -35,6 +35,9 @@ export interface AgentOutput {
   cost: number;
   duration: number;
   model?: string;
+  provider?: string;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 export interface ValidatorResult {
@@ -153,6 +156,9 @@ export interface AgentTraceRecord {
   traceId: string;
   agent: AgentRole;
   model: string;
+  provider?: string;
+  inputTokens?: number;
+  outputTokens?: number;
   tokens?: number;
   cost?: number;
   duration?: number;
