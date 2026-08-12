@@ -264,7 +264,7 @@ export abstract class SkillAgent<TOutput extends object = object> extends BaseAg
           message: errorMessage,
         });
 
-        const waitMs = 400 * attempt;
+        const waitMs = 2000 * attempt;
         console.warn(
           `[${this.role}] attempt ${attempt}/${attempts} failed: ${errorMessage} (retry in ${waitMs}ms)`,
         );

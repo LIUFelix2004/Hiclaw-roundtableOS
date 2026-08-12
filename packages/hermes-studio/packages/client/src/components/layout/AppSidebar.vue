@@ -14,6 +14,7 @@ import VersionManagementModal from "@/components/layout/VersionManagementModal.v
 import { changelog } from "@/data/changelog";
 import { getStoredUserId, getStoredUsername, isStoredSuperAdmin } from "@/api/client";
 import { clearThemeBackgroundCache } from '@/api/theme'
+import brandLogoPng from '/agents/brand-logo.png?url'
 
 const { t } = useI18n();
 const message = useMessage();
@@ -112,7 +113,7 @@ function handleUpdateClick() {
   <aside class="sidebar" :class="{ open: appStore.sidebarOpen, collapsed: appStore.sidebarCollapsed }" @click="handleSidebarClick">
     <div v-if="competitionMode" class="agentos-brand">
       <div class="agentos-logo">
-        <img src="/agents/brand-logo.png" alt="AgentOS" width="40" height="40" style="border-radius: 10px; object-fit: cover;" />
+        <img :src="brandLogoPng" alt="AgentOS" width="40" height="40" style="border-radius: 10px; object-fit: cover;" />
       </div>
       <span class="agentos-title">AgentOS</span>
       <span class="agentos-subtitle">多智能体协同平台</span>
@@ -508,9 +509,9 @@ function handleUpdateClick() {
   color: var(--text-secondary);
   transition: all .15s ease;
 }
-.competition-nav-item:hover { background: rgba(0, 0, 0, .04); color: var(--text-primary); }
-.competition-nav-item.active, .competition-nav-item[data-active="true"] { background: rgba(0, 0, 0, .06); color: #111111; font-weight: 600; }
-.competition-nav-item.active svg, .competition-nav-item[data-active="true"] svg { stroke: #111111; }
+.competition-nav-item:hover { background: var(--bg-card-hover, rgba(0, 0, 0, .04)); color: var(--text-primary); }
+.competition-nav-item.active, .competition-nav-item[data-active="true"] { background: var(--bg-card-hover, rgba(0, 0, 0, .06)); color: var(--text-primary); font-weight: 600; }
+.competition-nav-item.active svg, .competition-nav-item[data-active="true"] svg { stroke: var(--text-primary); }
 
 .sidebar {
   position: relative;

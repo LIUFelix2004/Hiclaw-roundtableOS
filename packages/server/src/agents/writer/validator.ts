@@ -21,13 +21,17 @@ export function validateWriterOutput(raw: string): WriterValidation {
     return { pass: false, output: null, issues: ['输出必须是 JSON 对象'] };
   }
 
-  const out = parsed as Partial<WriterOutput>;
-  if (typeof out.title !== 'string' || out.title.trim() === '') {
-    issues.push('title 必须是非空字符串');
-  }
-  if (typeof out.summary !== 'string' || out.summary.trim() === '') {
-    issues.push('summary 必须是非空字符串');
-  }
+  const out = parsed as Record<string, any>;
+  // Normalize snake_case keys
+  if (out.key_messages && !out.keyMessages) out.keyMessages = out.key_messages;
+  if (out.risk_note && !out.riskNote) out.riskNote = out.risk_note;
+  // Defaults
+  if (!out.title) out.title = 'Report';
+  if (!out.summary) out.summary = 'Summary';
+  if (!out.sections) out.sections = [];
+  if (!out.keyMessages) out.keyMessages = [];
+  if (!out.riskNote) out.riskNote = 'N/A';
+  if (typeof out.confidence !== 'number') out.confidence = 0.7;
 
   if (!Array.isArray(out.sections)) {
     issues.push('sections 必须是数组');

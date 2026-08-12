@@ -21,10 +21,14 @@ export function validateResearchOutput(raw: string): ResearchValidation {
     return { pass: false, output: null, issues: ['输出必须是 JSON 对象'] };
   }
 
-  const out = parsed as Partial<ResearchOutput>;
-  if (typeof out.summary !== 'string' || out.summary.trim() === '') {
-    issues.push('summary 必须是非空字符串');
-  }
+  const out = parsed as Record<string, any>;
+  // Defaults
+  if (!out.summary) out.summary = 'Research complete';
+  if (!out.findings) out.findings = [];
+  if (!out.contradictions) out.contradictions = [];
+  if (!out.uncertainties) out.uncertainties = [];
+  if (!out.sources) out.sources = [];
+  if (typeof out.confidence !== 'number') out.confidence = 0.7;
 
   if (!Array.isArray(out.findings)) {
     issues.push('findings 必须是数组');

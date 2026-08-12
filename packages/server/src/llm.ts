@@ -7,13 +7,13 @@ const openai = new OpenAI({
 });
 
 export const MODEL_FALLBACKS: Record<AgentRole, string[]> = {
-  data: [process.env.MODEL_DATA || 'gpt-4o-mini', 'gpt-3.5-turbo'],
-  research: [process.env.MODEL_RESEARCH || 'gpt-4o-mini', 'gpt-3.5-turbo'],
-  analyst: [process.env.MODEL_ANALYST || 'gpt-4o', 'gpt-4o-mini'],
-  writer: [process.env.MODEL_WRITER || 'gpt-4o', 'gpt-4o-mini'],
-  moderator: [process.env.MODEL_MODERATOR || 'gpt-4o', 'gpt-4o-mini'],
-  validator: [process.env.MODEL_VALIDATOR || 'gpt-4o-mini', 'gpt-3.5-turbo'],
-  rollback: [process.env.MODEL_ROLLBACK || 'gpt-4o-mini', 'gpt-3.5-turbo'],
+  data: [process.env.MODEL_DATA || 'gpt-5.5', 'gpt-5.4'],
+  research: [process.env.MODEL_RESEARCH || 'gpt-5.5', 'gpt-5.4'],
+  analyst: [process.env.MODEL_ANALYST || 'gpt-5.5', 'gpt-5.4'],
+  writer: [process.env.MODEL_WRITER || 'gpt-5.5', 'gpt-5.4'],
+  moderator: [process.env.MODEL_MODERATOR || 'gpt-5.5', 'gpt-5.4'],
+  validator: [process.env.MODEL_VALIDATOR || 'gpt-5.5', 'gpt-5.4'],
+  rollback: [process.env.MODEL_ROLLBACK || 'gpt-5.5', 'gpt-5.4'],
 };
 
 const MODEL_MAP = Object.fromEntries(
@@ -21,7 +21,7 @@ const MODEL_MAP = Object.fromEntries(
 ) as Record<AgentRole, string>;
 
 export function getDefaultModel(role: AgentRole): string {
-  return MODEL_FALLBACKS[role]?.[0] ?? 'gpt-4o-mini';
+  return MODEL_FALLBACKS[role]?.[0] ?? 'gpt-5.5';
 }
 
 export interface ChatOptions {
@@ -43,9 +43,11 @@ export interface ChatResult {
 }
 
 const PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4o': { input: 2.5, output: 10 },
-  'gpt-4o-mini': { input: 0.15, output: 0.6 },
-  'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
+  'gpt-5.5': { input: 2.5, output: 10 },
+  'gpt-5.4': { input: 1.5, output: 6 },
+  'gpt-5.6-luna': { input: 5, output: 15 },
+  'gpt-5.6-sol': { input: 5, output: 15 },
+  'gpt-5.6-terra': { input: 5, output: 15 },
 };
 
 function calcCost(model: string, inputTokens: number, outputTokens: number): number {
@@ -338,7 +340,7 @@ const MOCK_TEMPLATES: Record<AgentRole, (task: string) => string> = {
   },
   rollback: (task) => {
     const errorType = (task.match(/error_type["':：]*\s*"?([A-Z_]+)"?/i)?.[1] ?? 'MODEL_ERROR') as ErrorType;
-    const fromModel = task.match(/from_model["':：]*\s*"?([^",}\s]+)"?/i)?.[1] ?? 'gpt-4o';
+    const fromModel = task.match(/from_model["':：]*\s*"?([^",}\s]+)"?/i)?.[1] ?? 'gpt-5.5';
     const snapshotAvailable = /snapshot_available["':：]*\s*true/i.test(task);
     const fallbackRaw = task.match(/fallback_models["':：]*\s*\[([^\]]*)\]/i)?.[1] ?? '';
     const fallbackModels = fallbackRaw
@@ -406,7 +408,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function mockChat(options: ChatOptions): Promise<ChatResult> {
-  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-4o-mini';
+  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-5.5';
   const task = options.messages.map((m) => m.content).join('\n');
   const content = MOCK_TEMPLATES[options.role](task);
 
@@ -425,13 +427,13 @@ async function mockChat(options: ChatOptions): Promise<ChatResult> {
 }
 
 export async function chat(options: ChatOptions): Promise<ChatResult> {
-  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-4o-mini';
+  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-5.5';
 
   if (isMockEnabled()) {
     return mockChat(options);
   }
 
-  const stream = await openai.chat.completions.create(
+  const response = await openai.chat.completions.create(
     {
       model,
       messages: [
@@ -440,19 +442,13 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
       ],
       temperature: options.temperature ?? 0.7,
       max_tokens: options.maxTokens ?? 2048,
-      stream: true,
+      stream: false,
     },
     { signal: options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined },
   );
 
-  let content = '';
-  for await (const chunk of stream) {
-    const delta = chunk.choices[0]?.delta?.content;
-    if (delta) {
-      content += delta;
-      options.onChunk?.(delta);
-    }
-  }
+  const content = response.choices[0]?.message?.content ?? '';
+  if (content && options.onChunk) options.onChunk(content);
 
   // Estimate tokens (rough heuristic: ~4 chars per token)
   const inputChars = options.systemPrompt.length + options.messages.reduce((s, m) => s + m.content.length, 0);

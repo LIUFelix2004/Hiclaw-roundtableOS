@@ -425,3 +425,98 @@ export async function handleCompetitionRun(
     }
   })
 }
+
+/**
+ * Standalone roundtable handler — creates a direct socket connection
+ * to the backend when the frontend sends `roundtable:start` without
+ * going through the chat run flow.
+ */
+export function handleCompetitionRoundtable(
+  socket: Socket,
+  emitToSession: (socket: Socket, sessionId: string, event: string, payload: any) => void,
+) {
+  if (!isCompetitionMode()) return
+
+  socket.on('roundtable:start', (payload: any) => {
+    const sessionId = `rt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+    const runId = `run_rt_${Date.now().toString(36)}`
+
+    logger.info('[competition-roundtable] starting standalone roundtable, topic=%s', payload?.topic)
+
+    const backendSocket: ClientSocket = ioClient(BACKEND_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: false,
+      timeout: 30000,
+    })
+
+    let finished = false
+    const cleanup = () => {
+      if (finished) return
+      finished = true
+      backendSocket.removeAllListeners()
+      backendSocket.disconnect()
+    }
+
+    const timer = setTimeout(() => {
+      if (!finished) {
+        emitToSession(socket, sessionId, 'run.failed', {
+          event: 'run.failed', session_id: sessionId, run_id: runId, error: 'Roundtable timed out',
+        })
+        cleanup()
+      }
+    }, 300_000)
+
+    backendSocket.on('connect_error', (err) => {
+      clearTimeout(timer)
+      logger.error('[competition-roundtable] connect error: %s', err.message)
+      cleanup()
+    })
+
+    backendSocket.on('connect', () => {
+      logger.info('[competition-roundtable] connected, forwarding roundtable:start')
+      backendSocket.emit('roundtable:start', payload)
+    })
+
+    backendSocket.on('roundtable:speech', (data: any) => {
+      if (finished) return
+      socket.emit('roundtable:speech', data)
+    })
+
+    backendSocket.on('agent:output', (data: any) => {
+      if (finished) return
+      socket.emit('agent:output', data)
+    })
+
+    backendSocket.on('agent:status', (data: any) => {
+      if (finished) return
+      socket.emit('agent:status', data)
+    })
+
+    backendSocket.on('agent:trace', (data: any) => {
+      if (finished) return
+      socket.emit('agent:trace', data)
+    })
+
+    backendSocket.on('roundtable:consensus', (data: any) => {
+      if (finished) return
+      socket.emit('roundtable:consensus', data)
+      clearTimeout(timer)
+      cleanup()
+    })
+
+    backendSocket.on('error', (data: { message: string }) => {
+      clearTimeout(timer)
+      cleanup()
+    })
+
+    backendSocket.on('disconnect', () => {
+      clearTimeout(timer)
+      cleanup()
+    })
+
+    socket.on('disconnect', () => {
+      clearTimeout(timer)
+      cleanup()
+    })
+  })
+}

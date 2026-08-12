@@ -70,6 +70,7 @@ export function registerRoutes(app: any, authMiddleware: Array<(ctx: Context, ne
   app.use(ttsRoutes.routes())
   app.use(apiDocsRoutes.routes())
   app.use(petdexPublicRoutes.routes())
+  app.use(competitionRoutes.routes())
 
   // --- Auth middleware: all routes below require authentication ---
   authMiddleware.forEach((middleware) => app.use(middleware))
@@ -119,5 +120,4 @@ export function registerRoutes(app: any, authMiddleware: Array<(ctx: Context, ne
   app.use(writeGateRoutes.routes())              // Hermes Agent write approval review
   app.use(petdexRoutes.routes())
   app.use(petRoutes.routes())
-  app.use(competitionRoutes.routes())
 }

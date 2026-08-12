@@ -252,3 +252,48 @@ $transition-normal: 0.25s ease;
   --warning-rgb: 217, 119, 6;
   --accent-info-rgb: 37, 99, 235;
 }
+
+.dark .agentos-theme,
+.agentos-theme.dark {
+  --bg-primary: #1a1a1a;
+  --bg-primary-rgb: 26, 26, 26;
+  --bg-secondary: #222222;
+  --bg-sidebar: #1e1e1e;
+  --bg-card: #242424;
+  --bg-card-rgb: 36, 36, 36;
+  --bg-card-hover: #2e2e2e;
+  --bg-input: #2a2a2a;
+  --bg-sidebar-surface: #1e1e1e;
+  --bg-sidebar-surface-rgb: 30, 30, 30;
+  --bg-main-surface: #1a1a1a;
+  --bg-main-surface-rgb: 26, 26, 26;
+  --bg-page: #161616;
+  --border-color: #3a3a3a;
+  --border-light: #333333;
+  --accent-primary: #e0e0e0;
+  --accent-hover: #cccccc;
+  --accent-muted: #6b7280;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --text-muted: #6b7280;
+  --input-placeholder-color: #6b7280;
+  --success: #22c55e;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --msg-user-bg: #2a2a2a;
+  --msg-assistant-bg: #222222;
+  --msg-system-border: #3a3a3a;
+  --code-bg: #2a2a2a;
+  --text-on-accent: #111111;
+  --text-on-overlay: #ffffff;
+  --accent-info: #3b82f6;
+  --accent-primary-rgb: 224, 224, 224;
+  --accent-hover-rgb: 204, 204, 204;
+  --text-primary-rgb: 224, 224, 224;
+  --text-secondary-rgb: 160, 160, 160;
+  --text-muted-rgb: 107, 114, 128;
+  --success-rgb: 34, 197, 94;
+  --error-rgb: 239, 68, 68;
+  --warning-rgb: 245, 158, 11;
+  --accent-info-rgb: 59, 130, 246;
+}

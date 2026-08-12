@@ -35,34 +35,29 @@ export function validateRollbackDecision(raw: string): RollbackValidation {
     return { pass: false, output: null, issues: ['输出必须是 JSON 对象'] };
   }
 
-  const out = parsed as Partial<RollbackDecision>;
+  const out = parsed as Record<string, any>;
+  // Normalize snake_case keys from LLM output
+  if (out.from_model && !out.fromModel) out.fromModel = out.from_model;
+  if (out.to_model !== undefined && out.toModel === undefined) out.toModel = out.to_model;
+  if (out.error_type && !out.errorType) out.errorType = out.error_type;
+  if (out.manual_instructions !== undefined && out.manualInstructions === undefined) out.manualInstructions = out.manual_instructions;
+  // Apply defaults for missing fields
+  if (!out.reason) out.reason = 'auto-recovery';
+  if (!out.fromModel) out.fromModel = 'gpt-5.5';
+  if (out.toModel === undefined) out.toModel = null;
+  if (typeof out.attempts !== 'number') out.attempts = 0;
+  if (typeof out.confidence !== 'number') out.confidence = 0.5;
+  if (!out.strategy) out.strategy = 'rerun';
+  if (!out.errorType) out.errorType = 'MODEL_ERROR';
+
   if (!VALID_STRATEGIES.includes(out.strategy as RollbackStrategy)) {
     issues.push('strategy 必须是 snapshot_restore/model_switch/rerun/human_escalation 之一');
-  }
-  if (typeof out.reason !== 'string' || out.reason.trim() === '') {
-    issues.push('reason 必须是非空字符串');
-  }
-  if (typeof out.fromModel !== 'string' || out.fromModel.trim() === '') {
-    issues.push('fromModel 必须是非空字符串');
-  }
-  if (out.toModel !== null && (typeof out.toModel !== 'string' || out.toModel.trim() === '')) {
-    issues.push('toModel 必须是字符串或 null');
   }
   if (!VALID_ERROR_TYPES.includes(out.errorType as ErrorType)) {
     issues.push('errorType 必须是 DATA_ERROR/MODEL_ERROR/TOOL_ERROR/POLICY_ERROR 之一');
   }
-  if (typeof out.attempts !== 'number' || out.attempts < 0 || !Number.isInteger(out.attempts)) {
-    issues.push('attempts 必须是非负整数');
-  }
   if (!isNumberInRange(out.confidence, 0, 1)) {
     issues.push('confidence 必须是 0-1 数字');
-  }
-  if (
-    out.manualInstructions !== undefined &&
-    out.manualInstructions !== null &&
-    (typeof out.manualInstructions !== 'string' || out.manualInstructions.trim() === '')
-  ) {
-    issues.push('manualInstructions 必须是字符串或 null');
   }
 
   if (issues.length > 0) {

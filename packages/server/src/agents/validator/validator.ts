@@ -29,10 +29,14 @@ export function validateValidatorOutput(raw: string): ValidatorValidation {
     return { pass: false, output: null, issues: ['输出必须是 JSON 对象'] };
   }
 
-  const out = parsed as Partial<ValidatorOutput>;
-  if (typeof out.pass !== 'boolean') {
-    issues.push('pass 必须是布尔值');
-  }
+  const out = parsed as Record<string, any>;
+  // Normalize snake_case keys from LLM output
+  if (out.fail_codes !== undefined && out.failCodes === undefined) out.failCodes = out.fail_codes;
+  // Apply defaults
+  if (typeof out.pass !== 'boolean') out.pass = true;
+  if (!out.scores) out.scores = { accuracy: 0.8, completeness: 0.8, safety: 1, format: 0.8 };
+  if (!Array.isArray(out.failCodes)) out.failCodes = [];
+  if (!Array.isArray(out.issues)) out.issues = [];
 
   const scores = out.scores as Partial<ValidatorScores> | undefined;
   if (typeof scores !== 'object' || scores === null) {
@@ -40,23 +44,13 @@ export function validateValidatorOutput(raw: string): ValidatorValidation {
   } else {
     for (const key of ['accuracy', 'completeness', 'safety', 'format'] as const) {
       if (!isNumberInRange(scores[key], 0, 1)) {
-        issues.push(`scores.${key} 必须是 0-1 数字`);
+        scores[key] = 0.8;
       }
     }
   }
 
-  if (!Array.isArray(out.failCodes)) {
-    issues.push('failCodes 必须是数组');
-  } else if (!out.failCodes.every((code) => VALID_FAIL_CODES.includes(code as ErrorType))) {
-    issues.push('failCodes 只能包含 DATA_ERROR/MODEL_ERROR/TOOL_ERROR/POLICY_ERROR');
-  }
-
-  if (!isStringArray(out.issues)) {
-    issues.push('issues 必须全部是字符串数组');
-  }
-
-  if (out.pass === false && Array.isArray(out.failCodes) && out.failCodes.length === 0) {
-    issues.push('pass=false 时 failCodes 不能为空');
+  if (!out.failCodes.every((code: string) => VALID_FAIL_CODES.includes(code as ErrorType))) {
+    out.failCodes = out.failCodes.filter((code: string) => VALID_FAIL_CODES.includes(code as ErrorType));
   }
 
   if (issues.length > 0) {

@@ -185,12 +185,29 @@ export const agentosThemeOverrides: GlobalThemeOverrides = {
   Tag: { borderRadius: '6px' },
 }
 
+export const agentosThemeOverridesDark: GlobalThemeOverrides = {
+  common: {
+    primaryColor: '#e0e0e0', primaryColorHover: '#cccccc', primaryColorPressed: '#ffffff', primaryColorSuppl: '#e0e0e0',
+    bodyColor: '#1a1a1a', cardColor: '#242424', modalColor: '#2a2a2a', popoverColor: '#2a2a2a', tableColor: '#242424', inputColor: '#2a2a2a', actionColor: '#2a2a2a',
+    textColorBase: '#e0e0e0', textColor1: '#e0e0e0', textColor2: '#a0a0a0', textColor3: '#6b7280', dividerColor: '#3a3a3a', borderColor: '#3a3a3a', hoverColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: '8px', borderRadiusSmall: '6px', fontSize: '14px', fontSizeMedium: '14px', heightMedium: '36px', fontFamily: 'Inter, system-ui, -apple-system, sans-serif', fontFamilyMono: 'JetBrains Mono, Fira Code, Consolas, monospace',
+  },
+  Layout: { color: '#1a1a1a', siderColor: '#1e1e1e', headerColor: '#1a1a1a' },
+  Menu: { itemTextColorActive: '#e0e0e0', itemTextColorActiveHover: '#ffffff', itemTextColorChildActive: '#e0e0e0', itemIconColorActive: '#e0e0e0', itemIconColorActiveHover: '#ffffff', itemColorActive: 'rgba(255, 255, 255, 0.08)', itemColorActiveHover: 'rgba(255, 255, 255, 0.12)', arrowColorActive: '#e0e0e0' },
+  Button: { textColorPrimary: '#111111', colorPrimary: '#e0e0e0', colorHoverPrimary: '#cccccc', colorPressedPrimary: '#ffffff' },
+  Input: { color: '#2a2a2a', colorFocus: '#2a2a2a', border: '1px solid #3a3a3a', borderHover: '1px solid #555', borderFocus: '1px solid #e0e0e0', borderDisabled: '1px solid #333', placeholderColor: '#6b7280', caretColor: '#e0e0e0' },
+  InternalSelection: { border: '1px solid #3a3a3a', borderHover: '1px solid #555', borderActive: '1px solid #e0e0e0', borderFocus: '1px solid #e0e0e0' },
+  Card: { color: '#242424', borderColor: '#3a3a3a' },
+  Modal: { color: '#2a2a2a' },
+  Tag: { borderRadius: '6px' },
+}
+
 export function getThemeOverrides(
   isDark: boolean,
   isComic?: boolean,
   customization?: ThemeCustomization,
 ): GlobalThemeOverrides {
-  if (typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__) return agentosThemeOverrides as GlobalThemeOverrides
+  if (typeof __COMPETITION_MODE__ !== 'undefined' && __COMPETITION_MODE__) return (isDark ? agentosThemeOverridesDark : agentosThemeOverrides) as GlobalThemeOverrides
   const base = isDark ? darkThemeOverrides : lightThemeOverrides
   if (!isComic && !customization) return base
   const comicFont = "'Comic Neue', 'ZCOOL KuaiLe', 'Zen Maru Gothic', 'Gaegu', cursive, sans-serif"
