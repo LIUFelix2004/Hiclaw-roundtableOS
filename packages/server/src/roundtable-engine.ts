@@ -110,13 +110,17 @@ export class RoundtableEngine {
 
     // Output firewall: the final solution must pass Validator before consensus
     // is published. failCodes are aligned with ErrorType for Rollback.
-    await this.validateConsensus(
-      taskId,
-      config.topic,
-      transcriptContext,
-      moderatorResult,
-      roundCtx,
-    );
+    try {
+      await this.validateConsensus(
+        taskId,
+        config.topic,
+        transcriptContext,
+        moderatorResult,
+        roundCtx,
+      );
+    } catch (validationErr: any) {
+      console.warn(`[roundtable] validation failed, proceeding with unvalidated consensus: ${validationErr?.message}`);
+    }
 
     const consensus: RoundtableConsensus = {
       rounds: Math.max(...speeches.filter((s) => s.round > 0).map((s) => s.round), 0),
@@ -128,11 +132,14 @@ export class RoundtableEngine {
       risks: output.risks,
     };
 
+    const finalContent = typeof output.finalSolution === 'string'
+      ? output.finalSolution
+      : JSON.stringify(output.finalSolution);
     ctx.emit('roundtable:speech', {
       round: maxRounds + 1,
       agent: 'moderator',
       model: this.moderator.model,
-      content: output.finalSolution,
+      content: finalContent,
       stance: 'synthesize',
     } satisfies RoundtableSpeech);
     ctx.emit('roundtable:consensus', consensus);

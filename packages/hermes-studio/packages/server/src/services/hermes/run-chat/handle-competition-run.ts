@@ -143,9 +143,9 @@ export async function handleCompetitionRun(
 
   // Connect to B's backend
   const backendSocket: ClientSocket = ioClient(BACKEND_URL, {
-    transports: ['websocket', 'polling'],
+    transports: ['websocket'],
     reconnection: false,
-    timeout: 30000,
+    timeout: 120000,
   })
 
   let outputParts: string[] = []
@@ -444,9 +444,9 @@ export function handleCompetitionRoundtable(
     logger.info('[competition-roundtable] starting standalone roundtable, topic=%s', payload?.topic)
 
     const backendSocket: ClientSocket = ioClient(BACKEND_URL, {
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],
       reconnection: false,
-      timeout: 30000,
+      timeout: 120000,
     })
 
     let finished = false
@@ -478,11 +478,13 @@ export function handleCompetitionRoundtable(
     })
 
     backendSocket.on('roundtable:speech', (data: any) => {
+      logger.info('[competition-roundtable] speech: agent=%s round=%s stance=%s finished=%s', data?.agent, data?.round, data?.stance, finished)
       if (finished) return
       socket.emit('roundtable:speech', data)
     })
 
     backendSocket.on('agent:output', (data: any) => {
+      logger.info('[competition-roundtable] agent:output agent=%s tokens=%s finished=%s', data?.agent, data?.tokens, finished)
       if (finished) return
       socket.emit('agent:output', data)
     })
@@ -498,6 +500,7 @@ export function handleCompetitionRoundtable(
     })
 
     backendSocket.on('roundtable:consensus', (data: any) => {
+      logger.info('[competition-roundtable] consensus received, finished=%s', finished)
       if (finished) return
       socket.emit('roundtable:consensus', data)
       clearTimeout(timer)
@@ -505,11 +508,19 @@ export function handleCompetitionRoundtable(
     })
 
     backendSocket.on('error', (data: { message: string }) => {
+      logger.error('[competition-roundtable] backend error: %s', data?.message)
+      if (!finished) {
+        socket.emit('roundtable:error', { message: data?.message || 'Backend error' })
+      }
       clearTimeout(timer)
       cleanup()
     })
 
-    backendSocket.on('disconnect', () => {
+    backendSocket.on('disconnect', (reason: string) => {
+      logger.info('[competition-roundtable] backend disconnected: %s, finished=%s', reason, finished)
+      if (!finished) {
+        socket.emit('roundtable:done', { reason })
+      }
       clearTimeout(timer)
       cleanup()
     })

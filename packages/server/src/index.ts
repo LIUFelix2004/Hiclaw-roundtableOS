@@ -61,6 +61,8 @@ app.use(async (ctx, next) => {
 const httpServer = createServer(app.callback());
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   cors: { origin: '*' },
+  pingTimeout: 600000,
+  pingInterval: 25000,
 });
 
 const planner = new Planner();
@@ -89,7 +91,7 @@ io.on('connection', (socket: Socket) => {
       statsService.observe('error', {
         message: 'A task is already running for this connection.',
       });
-      socket.emit('error', {
+      socket.emit('task:error', {
         message: `A task is already running for this connection. Wait for it to complete.`,
       });
       return;
@@ -132,7 +134,7 @@ io.on('connection', (socket: Socket) => {
     } catch (err: any) {
       console.error(`[task:create] error:`, err);
       statsService.observe('error', { message: err?.message ?? String(err) });
-      socket.emit('error', { message: `Task failed: ${err.message}` });
+      socket.emit('task:error', { message: `Task failed: ${err.message}` });
     } finally {
       activeTasks.delete(socket.id);
     }
@@ -146,7 +148,7 @@ io.on('connection', (socket: Socket) => {
       statsService.observe('error', {
         message: 'A roundtable is already running for this connection.',
       });
-      socket.emit('error', {
+      socket.emit('roundtable:error', {
         message: 'A roundtable is already running for this connection.',
       });
       return;
@@ -166,14 +168,14 @@ io.on('connection', (socket: Socket) => {
     } catch (err: any) {
       console.error(`[roundtable:start] error:`, err);
       statsService.observe('error', { message: err?.message ?? String(err) });
-      socket.emit('error', { message: `Roundtable failed: ${err.message}` });
+      socket.emit('roundtable:error', { message: `Roundtable failed: ${err.message}` });
     } finally {
       activeRoundtables.delete(socket.id);
     }
   });
 
-  socket.on('disconnect', () => {
-    console.log(`[disconnected] ${socket.id}`);
+  socket.on('disconnect', (reason) => {
+    console.log(`[disconnected] ${socket.id} reason=${reason}`);
     activeTasks.delete(socket.id);
     activeRoundtables.delete(socket.id);
   });

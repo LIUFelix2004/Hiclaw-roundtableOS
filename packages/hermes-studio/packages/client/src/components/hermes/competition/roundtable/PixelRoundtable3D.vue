@@ -3,12 +3,14 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { CSS2DObject, CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js'
-import type { AgentRole, RoundtableSpeech } from '@hermes/shared'
+import type { AgentRole, RoundtableConsensus, RoundtableSpeech } from '@hermes/shared'
 
 interface Props {
   speeches: RoundtableSpeech[]
   isRunning: boolean
   activeRound: number
+  thinkingAgent: AgentRole | null
+  consensus: RoundtableConsensus | null
 }
 
 const props = defineProps<Props>()
@@ -46,6 +48,8 @@ let resumeRotateTimer: ReturnType<typeof setTimeout> | null = null
 const agentGroups = new Map<AgentRole, THREE.Group>()
 const agentLabels = new Map<AgentRole, HTMLDivElement>()
 const activeRings = new Map<AgentRole, THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>>()
+const thinkingIndicators = new Map<AgentRole, CSS2DObject>()
+const speechBubbles = new Map<AgentRole, HTMLDivElement>()
 const bubbleEffects: Array<{ group: THREE.Group; startedAt: number }> = []
 const disposableGeometries = new Set<THREE.BufferGeometry>()
 const disposableMaterials = new Set<THREE.Material>()
@@ -54,6 +58,8 @@ const pointer = new THREE.Vector2(4, 4)
 const particleMeta: Array<{ from: THREE.Vector3; to: THREE.Vector3; phase: number; arc: number }> = []
 let particleGeometry: THREE.BufferGeometry | null = null
 let particlePoints: THREE.Points | null = null
+let consensusLabelObject: CSS2DObject | null = null
+let consensusElement: HTMLDivElement | null = null
 
 function material<T extends THREE.Material>(value: T): T {
   disposableMaterials.add(value)
@@ -119,6 +125,7 @@ function createAgent(agent: AgentRole, index: number, target: THREE.Scene) {
   head.position.y = 1.65
   head.castShadow = true
   head.userData.agent = agent
+  head.userData.isHead = true
   group.add(head)
 
   const torsoGeometry = geometry(new THREE.BoxGeometry(.5, .4, .4))
@@ -154,6 +161,26 @@ function createAgent(agent: AgentRole, index: number, target: THREE.Scene) {
   labelObject.position.set(0, 2.25, 0)
   group.add(labelObject)
   agentLabels.set(agent, label)
+
+  // Thinking indicator (hidden by default)
+  const thinkingEl = document.createElement('div')
+  thinkingEl.className = 'thinking-indicator'
+  thinkingEl.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>'
+  const thinkingObj = new CSS2DObject(thinkingEl)
+  thinkingObj.position.set(0, 2.6, 0)
+  thinkingObj.visible = false
+  group.add(thinkingObj)
+  thinkingIndicators.set(agent, thinkingObj)
+
+  // Speech bubble (hidden by default)
+  const bubbleEl = document.createElement('div')
+  bubbleEl.className = 'speech-bubble'
+  bubbleEl.style.borderColor = `#${color.toString(16).padStart(6, '0')}`
+  const bubbleObj = new CSS2DObject(bubbleEl)
+  bubbleObj.position.set(0, -.3, 0)
+  bubbleObj.visible = false
+  group.add(bubbleObj)
+  speechBubbles.set(agent, bubbleEl)
 
   const ringMaterial = material(new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }))
   const ring = new THREE.Mesh(geometry(new THREE.RingGeometry(.48, .62, 32)), ringMaterial)
@@ -202,10 +229,20 @@ function spawnSpeechEffect(speech: RoundtableSpeech) {
   })
   parent.add(bubbleGroup)
   bubbleEffects.push({ group: bubbleGroup, startedAt: performance.now() })
+
   const label = agentLabels.get(agent)
   if (label) {
     const preview = speech.content.replace(/\s+/g, ' ').trim().slice(0, 46)
     label.querySelector('small')!.textContent = `${speech.model || '模型'} · ${preview || '正在发言'}`
+  }
+
+  // Update persistent speech bubble with 100-char summary
+  const bubbleEl = speechBubbles.get(agent)
+  if (bubbleEl && speech.stance !== 'moderate') {
+    const summary = speech.content.replace(/[#*\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100)
+    bubbleEl.textContent = summary + (speech.content.length > 100 ? '...' : '')
+    const bubbleObj = parent.children.find(c => c instanceof CSS2DObject && (c as CSS2DObject).element === bubbleEl) as CSS2DObject | undefined
+    if (bubbleObj) bubbleObj.visible = true
   }
 }
 
@@ -216,6 +253,31 @@ function createRoundLabel(target: THREE.Scene) {
   const label = new CSS2DObject(roundLabelElement)
   label.position.set(0, 2.4, 0)
   target.add(label)
+}
+
+function createConsensusLabel(target: THREE.Scene) {
+  consensusElement = document.createElement('div')
+  consensusElement.className = 'consensus-label'
+  consensusLabelObject = new CSS2DObject(consensusElement)
+  consensusLabelObject.position.set(0, 3.2, 0)
+  consensusLabelObject.visible = false
+  target.add(consensusLabelObject)
+}
+
+function updateConsensusDisplay(consensus: RoundtableConsensus | null) {
+  if (!consensusElement || !consensusLabelObject) return
+  if (!consensus) {
+    consensusLabelObject.visible = false
+    return
+  }
+  const answer = typeof consensus.finalAnswer === 'string'
+    ? consensus.finalAnswer
+    : typeof consensus.finalSolution === 'string'
+      ? consensus.finalSolution
+      : JSON.stringify(consensus.finalAnswer || consensus.finalSolution || '')
+  const summary = answer.replace(/[#*\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200)
+  consensusElement.innerHTML = `<strong>统一结论</strong><p>${summary}${answer.length > 200 ? '...' : ''}</p>`
+  consensusLabelObject.visible = true
 }
 
 function updateParticles(time: number) {
@@ -232,6 +294,7 @@ function updateParticles(time: number) {
 }
 
 function updateEffects(time: number) {
+  // Bubble rise effects
   for (let index = bubbleEffects.length - 1; index >= 0; index--) {
     const effect = bubbleEffects[index]
     const progress = (time - effect.startedAt) / 2000
@@ -245,15 +308,56 @@ function updateEffects(time: number) {
       bubbleEffects.splice(index, 1)
     }
   }
+
+  const currentThinking = props.thinkingAgent
+
   agentGroups.forEach((group, agent) => {
     const speaking = agent === activeSpeaker && bubbleEffects.some(effect => effect.group.parent === group)
-    const targetY = Number(group.userData.baseY) + (speaking ? Math.max(0, Math.sin(time * .018)) * .15 : 0)
+    const thinking = agent === currentThinking
+
+    // Bobbing: active speaker bobs, thinking agent has subtle pulse
+    let targetY = Number(group.userData.baseY)
+    if (speaking) {
+      targetY += Math.max(0, Math.sin(time * .018)) * .15
+    } else if (thinking) {
+      targetY += Math.sin(time * .006) * .06
+    }
     group.position.y = THREE.MathUtils.lerp(group.position.y, targetY, .22)
+
+    // Ring: speaker = solid, thinking = pulsing
     const ring = activeRings.get(agent)
-    if (ring) ring.material.opacity = speaking ? .55 + Math.sin(time * .007) * .25 : 0
+    if (ring) {
+      if (speaking) {
+        ring.material.opacity = .55 + Math.sin(time * .007) * .25
+      } else if (thinking) {
+        ring.material.opacity = .3 + Math.sin(time * .01) * .3
+      } else {
+        ring.material.opacity = THREE.MathUtils.lerp(ring.material.opacity, 0, .15)
+      }
+    }
+
+    // Head rotation wobble when thinking
+    const head = group.children.find(c => c.userData.isHead) as THREE.Mesh | undefined
+    if (head) {
+      if (thinking) {
+        head.rotation.z = Math.sin(time * .005) * .12
+        head.rotation.x = Math.sin(time * .004) * .08
+      } else {
+        head.rotation.z = THREE.MathUtils.lerp(head.rotation.z, 0, .15)
+        head.rotation.x = THREE.MathUtils.lerp(head.rotation.x, 0, .15)
+      }
+    }
+
+    // Thinking indicator visibility
+    const thinkingObj = thinkingIndicators.get(agent)
+    if (thinkingObj) thinkingObj.visible = thinking
+
+    // Hover scale
     const scale = hoveredAgent === agent ? 1.1 : 1
     group.scale.lerp(new THREE.Vector3(scale, scale, scale), .18)
   })
+
+  // Table flash
   if (tableMaterial && roundFlashStarted > 0) {
     const progress = (time - roundFlashStarted) / 900
     const flash = Math.max(0, Math.sin(Math.min(progress, 1) * Math.PI))
@@ -354,6 +458,7 @@ onMounted(() => {
   seatAgents.forEach((agent, index) => createAgent(agent, index, scene!))
   createParticles(scene)
   createRoundLabel(scene)
+  createConsensusLabel(scene)
 
   container.addEventListener('pointermove', updateHover)
   container.addEventListener('pointerleave', () => {
@@ -381,6 +486,10 @@ watch(() => props.isRunning, running => {
   if (particlePoints) particlePoints.visible = running
 })
 
+watch(() => props.consensus, value => {
+  updateConsensusDisplay(value)
+})
+
 onBeforeUnmount(() => {
   cancelAnimationFrame(animationFrame)
   resizeObserver?.disconnect()
@@ -396,6 +505,8 @@ onBeforeUnmount(() => {
   agentGroups.clear()
   agentLabels.clear()
   activeRings.clear()
+  thinkingIndicators.clear()
+  speechBubbles.clear()
   bubbleEffects.length = 0
   particleMeta.length = 0
 })
@@ -409,11 +520,67 @@ onBeforeUnmount(() => {
 .pixel-roundtable-3d { position:relative; width:100%; height:400px; border-radius:12px; overflow:hidden; cursor:grab; background:rgba(248,249,250,.52); border:1px solid var(--border-color); }
 .pixel-roundtable-3d:active { cursor:grabbing; }
 .pixel-roundtable-3d :deep(canvas) { display:block; width:100%; height:100%; }
+
+/* Agent name labels */
 .pixel-roundtable-3d :deep(.agent-name-label) { display:grid; justify-items:center; min-width:76px; padding:5px 7px; border:1px solid currentColor; border-radius:7px; background:rgba(255,255,255,.94); box-shadow:0 4px 12px rgba(15,23,42,.1); font-size:11px; font-weight:600; line-height:1.2; text-align:center; transition:transform .18s ease, box-shadow .18s ease; }
 .pixel-roundtable-3d :deep(.agent-name-label span) { font-size:8px; font-weight:500; opacity:.58; text-transform:uppercase; }
 .pixel-roundtable-3d :deep(.agent-name-label small) { display:none; width:148px; margin-top:4px; color:#475569; font-size:9px; font-weight:500; white-space:normal; }
 .pixel-roundtable-3d :deep(.agent-name-label.is-hovered) { transform:translateY(-4px) scale(1.04); box-shadow:0 8px 24px rgba(15,23,42,.16); }
 .pixel-roundtable-3d :deep(.agent-name-label.is-hovered small) { display:block; }
+
+/* Thinking indicator — animated dots */
+.pixel-roundtable-3d :deep(.thinking-indicator) {
+  display:flex; gap:4px; padding:4px 10px; border-radius:12px;
+  background:rgba(255,255,255,.95); box-shadow:0 2px 12px rgba(99,102,241,.25);
+  animation: thinking-pulse 1.8s ease-in-out infinite;
+}
+.pixel-roundtable-3d :deep(.thinking-indicator .dot) {
+  width:6px; height:6px; border-radius:50%; background:#6366f1;
+  animation: dot-bounce .6s ease-in-out infinite;
+}
+.pixel-roundtable-3d :deep(.thinking-indicator .dot:nth-child(2)) { animation-delay:.15s; }
+.pixel-roundtable-3d :deep(.thinking-indicator .dot:nth-child(3)) { animation-delay:.3s; }
+
+/* Speech bubble */
+.pixel-roundtable-3d :deep(.speech-bubble) {
+  max-width:180px; padding:6px 10px; border-radius:8px; border:1.5px solid #e5e7eb;
+  background:rgba(255,255,255,.96); box-shadow:0 3px 10px rgba(15,23,42,.1);
+  font-size:9px; line-height:1.4; color:#374151; word-break:break-all;
+  animation: bubble-in .3s ease-out;
+}
+
+/* Consensus label */
+.pixel-roundtable-3d :deep(.consensus-label) {
+  max-width:320px; padding:10px 14px; border-radius:10px;
+  background:linear-gradient(135deg, rgba(34,197,94,.12), rgba(99,102,241,.12));
+  border:1.5px solid #22c55e; box-shadow:0 6px 24px rgba(34,197,94,.18);
+  font-size:10px; line-height:1.5; color:#1f2937; text-align:center;
+  animation: consensus-in .5s ease-out;
+}
+.pixel-roundtable-3d :deep(.consensus-label strong) {
+  display:block; margin-bottom:4px; font-size:12px; color:#15803d;
+}
+.pixel-roundtable-3d :deep(.consensus-label p) { margin:0; }
+
+/* Round label */
 .pixel-roundtable-3d :deep(.round-label) { padding:6px 10px; border:1px solid #e5e7eb; border-radius:7px; background:rgba(255,255,255,.94); color:#111827; box-shadow:0 5px 16px rgba(15,23,42,.1); font-size:12px; font-weight:700; }
+
+@keyframes dot-bounce {
+  0%, 100% { transform:translateY(0); opacity:.4; }
+  50% { transform:translateY(-4px); opacity:1; }
+}
+@keyframes thinking-pulse {
+  0%, 100% { box-shadow:0 2px 12px rgba(99,102,241,.25); }
+  50% { box-shadow:0 2px 18px rgba(99,102,241,.5); }
+}
+@keyframes bubble-in {
+  from { opacity:0; transform:translateY(6px) scale(.9); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes consensus-in {
+  from { opacity:0; transform:scale(.85); }
+  to { opacity:1; transform:scale(1); }
+}
+
 @media (max-width:640px) { .pixel-roundtable-3d { height:320px; } }
 </style>

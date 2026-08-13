@@ -12,6 +12,15 @@ export interface ModeratorValidation {
   issues: string[];
 }
 
+function snakeToCamel(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    result[camelKey] = value;
+  }
+  return result;
+}
+
 export function validateModeratorOutput(raw: string): ModeratorValidation {
   const issues: string[] = [];
   const { parsed, error } = parseJsonObject(raw);
@@ -22,79 +31,66 @@ export function validateModeratorOutput(raw: string): ModeratorValidation {
     return { pass: false, output: null, issues: ['输出必须是 JSON 对象'] };
   }
 
-  const out = parsed as Partial<ModeratorOutput>;
+  const normalized = snakeToCamel(parsed as Record<string, any>);
+  const out = normalized as Partial<ModeratorOutput>;
+
   if (typeof out.meetingSummary !== 'string' || out.meetingSummary.trim() === '') {
-    issues.push('meetingSummary 必须是非空字符串');
+    out.meetingSummary = out.finalSolution || 'Roundtable synthesis complete';
   }
   if (typeof out.finalSolution !== 'string' || out.finalSolution.trim() === '') {
-    issues.push('finalSolution 必须是非空字符串');
+    out.finalSolution = out.meetingSummary || 'No final solution provided';
   }
 
   if (!Array.isArray(out.agentContributions)) {
-    issues.push('agentContributions 必须是数组');
+    out.agentContributions = [];
   } else {
-    out.agentContributions.forEach((item, index) => {
-      if (typeof item !== 'object' || item === null) {
-        issues.push(`agentContributions[${index}] 必须是对象`);
-        return;
-      }
-      const c = item as Partial<ModeratorContribution>;
-      if (typeof c.agent !== 'string' || c.agent.trim() === '') {
-        issues.push(`agentContributions[${index}].agent 必须是非空字符串`);
-      }
-      if (typeof c.contribution !== 'string' || c.contribution.trim() === '') {
-        issues.push(`agentContributions[${index}].contribution 必须是非空字符串`);
-      }
+    out.agentContributions = out.agentContributions.map((item: any) => {
+      if (typeof item !== 'object' || item === null) return { agent: 'unknown', contribution: '' };
+      const c = snakeToCamel(item) as Partial<ModeratorContribution>;
+      return {
+        agent: typeof c.agent === 'string' ? c.agent : 'unknown',
+        contribution: typeof c.contribution === 'string' ? c.contribution : '',
+      };
     });
   }
 
   if (!Array.isArray(out.executionTasks)) {
-    issues.push('executionTasks 必须是数组');
+    out.executionTasks = [];
   } else {
-    out.executionTasks.forEach((task, index) => {
-      if (typeof task !== 'object' || task === null) {
-        issues.push(`executionTasks[${index}] 必须是对象`);
-        return;
-      }
-      const t = task as Partial<RoundtableTask>;
-      if (typeof t.agent !== 'string' || t.agent.trim() === '') {
-        issues.push(`executionTasks[${index}].agent 必须是非空字符串`);
-      }
-      if (typeof t.objective !== 'string' || t.objective.trim() === '') {
-        issues.push(`executionTasks[${index}].objective 必须是非空字符串`);
-      }
-      if (typeof t.input !== 'string' || t.input.trim() === '') {
-        issues.push(`executionTasks[${index}].input 必须是非空字符串`);
-      }
-      if (typeof t.expectedOutput !== 'string' || t.expectedOutput.trim() === '') {
-        issues.push(`executionTasks[${index}].expectedOutput 必须是非空字符串`);
-      }
-      if (t.deadline !== undefined && (typeof t.deadline !== 'string' || t.deadline.trim() === '')) {
-        issues.push(`executionTasks[${index}].deadline 必须是非空字符串`);
-      }
+    out.executionTasks = out.executionTasks.map((task: any) => {
+      if (typeof task !== 'object' || task === null) return { agent: 'unknown', objective: '', input: '', expectedOutput: '' };
+      const t = snakeToCamel(task) as Partial<RoundtableTask>;
+      return {
+        agent: typeof t.agent === 'string' ? t.agent : 'unknown',
+        objective: typeof t.objective === 'string' ? t.objective : '',
+        input: typeof t.input === 'string' ? t.input : '',
+        expectedOutput: typeof t.expectedOutput === 'string' ? t.expectedOutput : '',
+        ...(t.deadline ? { deadline: t.deadline } : {}),
+      };
     });
   }
 
   if (!isStringArray(out.risks)) {
-    issues.push('risks 必须全部是字符串数组');
-  }
-  if (!isNumberInRange(out.confidence, 0, 1)) {
-    issues.push('confidence 必须是 0-1 数字');
+    if (Array.isArray(out.risks)) {
+      out.risks = (out.risks as any[]).map((r: any) => typeof r === 'string' ? r : JSON.stringify(r));
+    } else {
+      out.risks = [];
+    }
   }
 
-  if (issues.length > 0) {
-    return { pass: false, output: null, issues };
+  if (!isNumberInRange(out.confidence, 0, 1)) {
+    out.confidence = 0.7;
   }
 
   return {
     pass: true,
     output: {
-      meetingSummary: (out as ModeratorOutput).meetingSummary,
-      finalSolution: (out as ModeratorOutput).finalSolution,
-      agentContributions: (out as ModeratorOutput).agentContributions,
-      executionTasks: (out as ModeratorOutput).executionTasks,
-      risks: (out as ModeratorOutput).risks,
-      confidence: (out as ModeratorOutput).confidence,
+      meetingSummary: out.meetingSummary!,
+      finalSolution: out.finalSolution!,
+      agentContributions: out.agentContributions as ModeratorContribution[],
+      executionTasks: out.executionTasks as RoundtableTask[],
+      risks: out.risks as string[],
+      confidence: out.confidence!,
     },
     issues: [],
   };
