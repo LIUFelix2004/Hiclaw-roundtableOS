@@ -37,6 +37,11 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
     __COMPETITION_MODE__: JSON.stringify(['1', 'true', 'yes', 'on'].includes(String(process.env.HERMES_COMPETITION_MODE || '').trim().toLowerCase())),
   },
+  esbuild: {
+    define: {
+      __COMPETITION_MODE__: JSON.stringify(['1', 'true', 'yes', 'on'].includes(String(process.env.HERMES_COMPETITION_MODE || '').trim().toLowerCase())),
+    },
+  },
   resolve: {
     alias: {
       '@': resolve(__dirname, 'packages/client/src'),
@@ -84,10 +89,7 @@ export default defineConfig({
       '/health': createProxyConfig(),
       '/upload': createProxyConfig(),
       '/webhook': createProxyConfig(),
-      '/socket.io': {
-        target: BACKEND,
-        ws: true,
-      },
+      '/socket.io': createProxyConfig(),
     },
   },
 })
