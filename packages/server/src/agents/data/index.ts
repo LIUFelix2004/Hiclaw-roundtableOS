@@ -22,8 +22,8 @@ export class DataAgent extends SkillAgent<DataOutput> {
       systemPrompt: SYSTEM_PROMPT,
       temperature: 0.2,
       maxTokens: 3072,
-      retryCount: 2,
-      timeout: 45000,
+      retryCount: 4,
+      timeout: 120000,
     };
     super(config);
   }

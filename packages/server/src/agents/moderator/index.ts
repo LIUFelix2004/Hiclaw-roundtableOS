@@ -25,8 +25,8 @@ export class ModeratorAgent extends SkillAgent<ModeratorOutput> {
       systemPrompt: SYSTEM_PROMPT,
       temperature: 0.3,
       maxTokens: 4096,
-      retryCount: 2,
-      timeout: 60000,
+      retryCount: 4,
+      timeout: 120000,
     };
     super(config);
   }

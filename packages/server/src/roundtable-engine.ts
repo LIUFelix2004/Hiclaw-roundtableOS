@@ -217,7 +217,9 @@ export class RoundtableEngine {
           event === 'validator:result' ||
           event === 'agent:trace' ||
           event === 'agent:snapshot' ||
-          event === 'agent:error'
+          event === 'agent:error' ||
+          event === 'agent:output' ||
+          event === 'agent:status'
         ) {
           ctx.emit(event, payload);
         }

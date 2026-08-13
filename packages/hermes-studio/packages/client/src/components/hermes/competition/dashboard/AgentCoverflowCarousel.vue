@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 interface AgentSlide {
   name: string
@@ -288,8 +288,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   transition: box-shadow .2s;
 }
@@ -308,13 +308,13 @@ onUnmounted(() => {
 .agent-name {
   font-size: 16px;
   font-weight: 700;
-  color: #111;
+  color: var(--text-primary);
   letter-spacing: .02em;
 }
 
 .agent-sub {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-secondary);
   text-align: center;
   padding: 0 16px;
 }
@@ -340,7 +340,7 @@ onUnmounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #111;
+  background: var(--text-primary);
   opacity: .2;
   border: none;
   cursor: pointer;
@@ -356,9 +356,9 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #111;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -366,7 +366,7 @@ onUnmounted(() => {
   transition: background .15s, border-color .15s;
   box-shadow: 0 2px 8px rgba(0,0,0,.06);
 }
-.coverflow-arrow:hover { background: #f3f4f6; border-color: #d1d5db; }
+.coverflow-arrow:hover { background: var(--bg-card-hover); border-color: var(--accent-muted); }
 .coverflow-arrow--left { left: 12px; }
 .coverflow-arrow--right { right: 12px; }
 

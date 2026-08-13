@@ -135,6 +135,7 @@ async function allowServerTokenForAgentEndpoint(ctx: Context, token: string): Pr
 
 function isProtectedHttpPath(path: string): boolean {
   const lowerPath = path.toLowerCase()
+  if (lowerPath.startsWith('/api/competition/')) return false
   return lowerPath.startsWith('/api') ||
     lowerPath.startsWith('/v1') ||
     lowerPath.startsWith('/upload')
@@ -215,12 +216,13 @@ export async function authenticateUserToken(token: string): Promise<Authenticate
 }
 
 export async function isAuthEnabled(): Promise<boolean> {
+  if (process.env.HERMES_COMPETITION_MODE === '1' || process.env.HERMES_COMPETITION_MODE?.toLowerCase() === 'true') return false
   await getJwtSecret()
   return true
 }
 
 export async function requireUserJwt(ctx: Context, next: Next): Promise<void> {
-  if (!isProtectedHttpPath(ctx.path)) {
+  if (!isProtectedHttpPath(ctx.path) || !await isAuthEnabled()) {
     await next()
     return
   }

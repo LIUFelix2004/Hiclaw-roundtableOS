@@ -1,47 +1,31 @@
 import OpenAI from 'openai';
 import type { AgentRole, ErrorType } from '@hermes/shared';
 
-export type PlannerRole = 'planner';
-export type ChatRole = AgentRole | PlannerRole;
-export type ModelProvider = 'openai' | 'anthropic' | 'deepseek' | 'mock';
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder',
   baseURL: process.env.OPENAI_BASE_URL,
 });
 
-let deepseekClient: OpenAI | undefined;
-function getDeepSeekClient(): OpenAI {
-  if (!deepseekClient) {
-    deepseekClient = new OpenAI({
-      apiKey: process.env.DEEPSEEK_API_KEY || 'sk-placeholder',
-      baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-    });
-  }
-  return deepseekClient;
-}
-
-export const MODEL_FALLBACKS: Record<ChatRole, string[]> = {
-  data: [process.env.MODEL_DATA || 'gpt-4o-mini', 'gpt-3.5-turbo'],
-  research: [process.env.MODEL_RESEARCH || 'gpt-4o-mini', 'gpt-3.5-turbo'],
-  analyst: [process.env.MODEL_ANALYST || 'gpt-4o', 'gpt-4o-mini'],
-  writer: [process.env.MODEL_WRITER || 'gpt-4o', 'gpt-4o-mini'],
-  moderator: [process.env.MODEL_MODERATOR || 'gpt-4o', 'gpt-4o-mini'],
-  validator: [process.env.MODEL_VALIDATOR || 'gpt-4o-mini', 'gpt-3.5-turbo'],
-  rollback: [process.env.MODEL_ROLLBACK || 'gpt-4o-mini', 'gpt-3.5-turbo'],
-  planner: [process.env.MODEL_PLANNER || 'gpt-4o-mini', 'gpt-4o'],
+export const MODEL_FALLBACKS: Record<AgentRole, string[]> = {
+  data: [process.env.MODEL_DATA || 'gpt-5.5', 'gpt-5.4'],
+  research: [process.env.MODEL_RESEARCH || 'gpt-5.5', 'gpt-5.4'],
+  analyst: [process.env.MODEL_ANALYST || 'gpt-5.5', 'gpt-5.4'],
+  writer: [process.env.MODEL_WRITER || 'gpt-5.5', 'gpt-5.4'],
+  moderator: [process.env.MODEL_MODERATOR || 'gpt-5.5', 'gpt-5.4'],
+  validator: [process.env.MODEL_VALIDATOR || 'gpt-5.5', 'gpt-5.4'],
+  rollback: [process.env.MODEL_ROLLBACK || 'gpt-5.5', 'gpt-5.4'],
 };
 
 const MODEL_MAP = Object.fromEntries(
   Object.entries(MODEL_FALLBACKS).map(([role, fallbacks]) => [role, fallbacks[0]]),
-) as Record<ChatRole, string>;
+) as Record<AgentRole, string>;
 
-export function getDefaultModel(role: ChatRole): string {
-  return MODEL_FALLBACKS[role]?.[0] ?? 'gpt-4o-mini';
+export function getDefaultModel(role: AgentRole): string {
+  return MODEL_FALLBACKS[role]?.[0] ?? 'gpt-5.5';
 }
 
 export interface ChatOptions {
-  role: ChatRole;
+  role: AgentRole;
   model?: string;
   systemPrompt: string;
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
@@ -56,22 +40,14 @@ export interface ChatResult {
   tokens: number;
   cost: number;
   model: string;
-  provider: ModelProvider;
-  inputTokens: number;
-  outputTokens: number;
 }
 
 const PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4o': { input: 2.5, output: 10 },
-  'gpt-4o-mini': { input: 0.15, output: 0.6 },
-  'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
-  'deepseek-chat': { input: 0.27, output: 1.1 },
-  'deepseek-reasoner': { input: 0.55, output: 2.19 },
-  'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
-  'claude-3-5-haiku-20241022': { input: 0.8, output: 4 },
-  'claude-3-7-sonnet-20250219': { input: 3, output: 15 },
-  'claude-sonnet-4-20250514': { input: 3, output: 15 },
-  'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
+  'gpt-5.5': { input: 2.5, output: 10 },
+  'gpt-5.4': { input: 1.5, output: 6 },
+  'gpt-5.6-luna': { input: 5, output: 15 },
+  'gpt-5.6-sol': { input: 5, output: 15 },
+  'gpt-5.6-terra': { input: 5, output: 15 },
 };
 
 function calcCost(model: string, inputTokens: number, outputTokens: number): number {
@@ -81,40 +57,11 @@ function calcCost(model: string, inputTokens: number, outputTokens: number): num
 
 /**
  * Mock mode: MOCK_LLM=1 forces built-in demo data.
- * If no provider key (OpenAI/Anthropic/DeepSeek) is configured,
- * mock mode is enabled automatically so the demo can run offline.
+ * If no OPENAI_API_KEY is configured, mock mode is enabled automatically
+ * so the demo can run offline without any model gateway.
  */
 export function isMockEnabled(): boolean {
-  return process.env.MOCK_LLM === '1' || !hasProviderKey();
-}
-
-function hasProviderKey(): boolean {
-  return Boolean(
-    process.env.OPENAI_API_KEY ||
-      process.env.ANTHROPIC_API_KEY ||
-      process.env.DEEPSEEK_API_KEY,
-  );
-}
-
-export function resolveProvider(model?: string): ModelProvider {
-  const prefix = model?.split(':')[0];
-  if (prefix === 'openai' || prefix === 'anthropic' || prefix === 'deepseek') {
-    return prefix;
-  }
-  const explicit = (process.env.LLM_PROVIDER || 'auto').toLowerCase();
-  if (explicit === 'openai' || explicit === 'anthropic' || explicit === 'deepseek') {
-    return explicit;
-  }
-  if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
-  if (process.env.DEEPSEEK_API_KEY) return 'deepseek';
-  return 'openai';
-}
-
-export function estimateTokens(text: string): number {
-  if (!text) return 0;
-  const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g) ?? []).length;
-  const other = Math.max(0, text.length - cjk);
-  return Math.max(1, Math.ceil(cjk * 0.9 + other / 4));
+  return process.env.MOCK_LLM === '1' || !process.env.OPENAI_API_KEY;
 }
 
 interface MockDataPoint {
@@ -393,7 +340,7 @@ const MOCK_TEMPLATES: Record<AgentRole, (task: string) => string> = {
   },
   rollback: (task) => {
     const errorType = (task.match(/error_type["':：]*\s*"?([A-Z_]+)"?/i)?.[1] ?? 'MODEL_ERROR') as ErrorType;
-    const fromModel = task.match(/from_model["':：]*\s*"?([^",}\s]+)"?/i)?.[1] ?? 'gpt-4o';
+    const fromModel = task.match(/from_model["':：]*\s*"?([^",}\s]+)"?/i)?.[1] ?? 'gpt-5.5';
     const snapshotAvailable = /snapshot_available["':：]*\s*true/i.test(task);
     const fallbackRaw = task.match(/fallback_models["':：]*\s*\[([^\]]*)\]/i)?.[1] ?? '';
     const fallbackModels = fallbackRaw
@@ -461,13 +408,9 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function mockChat(options: ChatOptions): Promise<ChatResult> {
-  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-4o-mini';
+  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-5.5';
   const task = options.messages.map((m) => m.content).join('\n');
-  const template =
-    MOCK_TEMPLATES[options.role as AgentRole] ??
-    ((t: string) =>
-      JSON.stringify({ summary: safeTopic(t), confidence: 0.8 }, null, 2));
-  const content = template(task);
+  const content = MOCK_TEMPLATES[options.role](task);
 
   // Simulate streaming so the canvas shows the same UX as real model calls.
   const chunkSize = 6;
@@ -476,199 +419,42 @@ async function mockChat(options: ChatOptions): Promise<ChatResult> {
     await sleep(8);
   }
 
-  const inputTokens = estimateTokens(task);
-  const outputTokens = estimateTokens(content);
+  const inputTokens = Math.ceil(task.length / 4);
+  const outputTokens = Math.ceil(content.length / 4);
   const cost = calcCost(model, inputTokens, outputTokens);
 
-  return {
-    content,
-    tokens: inputTokens + outputTokens,
-    cost,
-    model,
-    provider: 'mock',
-    inputTokens,
-    outputTokens,
-  };
-}
-
-function stripModelPrefix(model: string, provider: ModelProvider): string {
-  const prefix = `${provider}:`;
-  return model.startsWith(prefix) ? model.slice(prefix.length) : model;
-}
-
-function promptTokenInput(options: ChatOptions): string {
-  return options.systemPrompt + options.messages.map((m) => m.content).join('\n');
-}
-
-async function callOpenAICompatible(
-  options: ChatOptions,
-  model: string,
-  provider: 'openai' | 'deepseek',
-): Promise<ChatResult> {
-  const client = provider === 'deepseek' ? getDeepSeekClient() : openai;
-  const apiModel = stripModelPrefix(model, provider);
-  const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming = {
-    model: apiModel,
-    messages: [
-      { role: 'system', content: options.systemPrompt },
-      ...options.messages.map((m) => ({ role: m.role, content: m.content })),
-    ],
-    temperature: options.temperature ?? 0.7,
-    max_tokens: options.maxTokens ?? 2048,
-    stream: true,
-    stream_options: { include_usage: true },
-  };
-  const requestOptions = {
-    signal: options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined,
-  };
-
-  let stream: Awaited<ReturnType<typeof client.chat.completions.create>>;
-  try {
-    stream = await client.chat.completions.create(params, requestOptions);
-  } catch (err: any) {
-    if (String(err?.message).toLowerCase().includes('stream_options')) {
-      const { stream_options: _ignored, ...retryParams } = params;
-      stream = await client.chat.completions.create(retryParams, requestOptions);
-    } else {
-      throw err;
-    }
-  }
-
-  let content = '';
-  let inputTokens = 0;
-  let outputTokens = 0;
-  for await (const chunk of stream) {
-    const usage = chunk.usage;
-    if (usage) {
-      inputTokens = usage.prompt_tokens ?? inputTokens;
-      outputTokens = usage.completion_tokens ?? outputTokens;
-    }
-    const delta = chunk.choices[0]?.delta?.content;
-    if (delta) {
-      content += delta;
-      options.onChunk?.(delta);
-    }
-  }
-
-  if (!inputTokens) inputTokens = estimateTokens(promptTokenInput(options));
-  if (!outputTokens) outputTokens = estimateTokens(content);
-  const cost = calcCost(apiModel, inputTokens, outputTokens);
-
-  return {
-    content,
-    tokens: inputTokens + outputTokens,
-    cost,
-    model,
-    provider,
-    inputTokens,
-    outputTokens,
-  };
-}
-
-async function callAnthropic(options: ChatOptions, model: string): Promise<ChatResult> {
-  const apiModel = stripModelPrefix(model, 'anthropic');
-  const baseUrl = (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(
-    /\/+$/,
-    '',
-  );
-  const messagesUrl = baseUrl.endsWith('/v1')
-    ? `${baseUrl}/messages`
-    : `${baseUrl}/v1/messages`;
-  const response = await fetch(messagesUrl, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: apiModel,
-      max_tokens: options.maxTokens ?? 2048,
-      system: options.systemPrompt,
-      messages: options.messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      temperature: options.temperature ?? 0.7,
-      stream: true,
-    }),
-    signal: options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined,
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text().catch(() => '');
-    throw new Error(`Anthropic API ${response.status}: ${errorBody.slice(0, 300)}`);
-  }
-  if (!response.body) {
-    throw new Error('Anthropic API returned an empty stream');
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let content = '';
-  let inputTokens = 0;
-  let outputTokens = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
-    for (const rawLine of lines) {
-      const line = rawLine.trim();
-      if (!line.startsWith('data:')) continue;
-      const payload = line.slice(5).trim();
-      if (!payload || payload === '[DONE]') continue;
-      let event: any;
-      try {
-        event = JSON.parse(payload);
-      } catch {
-        continue;
-      }
-      if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-        const delta = event.delta.text ?? '';
-        content += delta;
-        options.onChunk?.(delta);
-      } else if (
-        event.type === 'message_start' &&
-        event.message?.usage?.input_tokens != null
-      ) {
-        inputTokens = event.message.usage.input_tokens;
-      } else if (
-        event.type === 'message_delta' &&
-        event.usage?.output_tokens != null
-      ) {
-        outputTokens = event.usage.output_tokens;
-      }
-    }
-  }
-
-  if (!inputTokens) inputTokens = estimateTokens(promptTokenInput(options));
-  if (!outputTokens) outputTokens = estimateTokens(content);
-  const cost = calcCost(apiModel, inputTokens, outputTokens);
-
-  return {
-    content,
-    tokens: inputTokens + outputTokens,
-    cost,
-    model,
-    provider: 'anthropic',
-    inputTokens,
-    outputTokens,
-  };
+  return { content, tokens: inputTokens + outputTokens, cost, model };
 }
 
 export async function chat(options: ChatOptions): Promise<ChatResult> {
-  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-4o-mini';
+  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-5.5';
 
   if (isMockEnabled()) {
     return mockChat(options);
   }
 
-  const provider = resolveProvider(model);
-  if (provider === 'anthropic') return callAnthropic(options, model);
-  if (provider === 'deepseek') return callOpenAICompatible(options, model, 'deepseek');
-  return callOpenAICompatible(options, model, 'openai');
+  const response = await openai.chat.completions.create(
+    {
+      model,
+      messages: [
+        { role: 'system', content: options.systemPrompt },
+        ...options.messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ],
+      temperature: options.temperature ?? 0.7,
+      max_tokens: options.maxTokens ?? 2048,
+      stream: false,
+    },
+    { signal: options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined },
+  );
+
+  const content = response.choices[0]?.message?.content ?? '';
+  if (content && options.onChunk) options.onChunk(content);
+
+  // Estimate tokens (rough heuristic: ~4 chars per token)
+  const inputChars = options.systemPrompt.length + options.messages.reduce((s, m) => s + m.content.length, 0);
+  const inputTokens = Math.ceil(inputChars / 4);
+  const outputTokens = Math.ceil(content.length / 4);
+  const cost = calcCost(model, inputTokens, outputTokens);
+
+  return { content, tokens: inputTokens + outputTokens, cost, model };
 }

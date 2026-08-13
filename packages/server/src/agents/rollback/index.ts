@@ -25,8 +25,8 @@ export class RollbackAgent extends SkillAgent<RollbackDecision> {
       systemPrompt: SYSTEM_PROMPT,
       temperature: 0.1,
       maxTokens: 2048,
-      retryCount: 1,
-      timeout: 30000,
+      retryCount: 4,
+      timeout: 120000,
     };
     super(config);
   }

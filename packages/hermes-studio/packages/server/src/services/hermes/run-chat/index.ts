@@ -21,7 +21,7 @@ import {
 import { getAgentBridgeManager } from '../agent-bridge/manager'
 import { redactAgentBridgeError } from '../agent-bridge/redact'
 import { handleBridgeRun, resumeBridgeRun } from './handle-bridge-run'
-import { isCompetitionMode, handleCompetitionRun } from './handle-competition-run'
+import { isCompetitionMode, handleCompetitionRun, handleCompetitionRoundtable } from './handle-competition-run'
 import { handleCodingAgentRun } from './handle-coding-agent-run'
 import { handleEkkoAgentRun } from './handle-ekko-agent-run'
 import { handleAbort } from './abort'
@@ -521,6 +521,8 @@ export class ChatRunSocket {
         })
       }
     })
+
+    handleCompetitionRoundtable(socket, this.emitToSession.bind(this))
   }
 
   // --- Run dispatcher ---

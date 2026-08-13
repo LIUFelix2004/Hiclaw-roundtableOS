@@ -10,11 +10,12 @@ export const useCompetitionRoundtableStore = defineStore('competition-roundtable
   const speeches = ref<RoundtableSpeech[]>([])
   const consensus = ref<RoundtableConsensus | null>(null)
   const isRunning = ref(false)
+  const totalTokens = ref(0)
+  const phase = ref<'idle' | 'discussing' | 'synthesizing' | 'done'>('idle')
   const activeRound = computed(() => speeches.value.length ? Math.max(...speeches.value.map(speech => speech.round)) : 0)
 
-  function emit(event: string, payload: unknown) {
-    const socket = getChatRunSocket('chat-run') || connectChatRun(null, 'chat-run')
-    socket.emit(event, payload)
+  function getSocket() {
+    return getChatRunSocket('chat-run') || connectChatRun(null, 'chat-run')
   }
 
   function startRoundtable(config: RoundtableConfig) {
@@ -24,7 +25,33 @@ export const useCompetitionRoundtableStore = defineStore('competition-roundtable
     speeches.value = []
     consensus.value = null
     isRunning.value = true
-    emit('roundtable:start', { topic: config.topic, agents: config.agents, maxRounds: maxRounds.value })
+    totalTokens.value = 0
+    phase.value = 'discussing'
+
+    const socket = getSocket()
+
+    socket.off('roundtable:speech')
+    socket.off('roundtable:consensus')
+    socket.off('agent:output')
+
+    socket.on('roundtable:speech', (data: Partial<RoundtableSpeech>) => {
+      addSpeech(data)
+      if (data.stance === 'synthesize') {
+        phase.value = 'done'
+      } else if (data.round && data.round > maxRounds.value) {
+        phase.value = 'synthesizing'
+      }
+    })
+
+    socket.on('agent:output', (data: any) => {
+      if (data?.tokens) totalTokens.value += data.tokens
+    })
+
+    socket.on('roundtable:consensus', (data: RoundtableConsensus) => {
+      setConsensus(data)
+    })
+
+    socket.emit('roundtable:start', { topic: config.topic, agents: config.agents, maxRounds: maxRounds.value })
   }
 
   function addSpeech(speech: Partial<RoundtableSpeech>) {
@@ -40,13 +67,16 @@ export const useCompetitionRoundtableStore = defineStore('competition-roundtable
   function setConsensus(value: RoundtableConsensus) {
     consensus.value = value
     isRunning.value = false
+    phase.value = 'done'
   }
 
   function reset() {
     speeches.value = []
     consensus.value = null
     isRunning.value = false
+    totalTokens.value = 0
+    phase.value = 'idle'
   }
 
-  return { topic, agents, maxRounds, speeches, consensus, isRunning, activeRound, startRoundtable, addSpeech, setConsensus, reset }
+  return { topic, agents, maxRounds, speeches, consensus, isRunning, activeRound, totalTokens, phase, startRoundtable, addSpeech, setConsensus, reset }
 })

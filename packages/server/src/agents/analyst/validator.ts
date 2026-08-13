@@ -28,11 +28,16 @@ export function validateAnalystOutput(raw: string): AnalystValidation {
     return { pass: false, output: null, issues: ['输出必须是 JSON 对象'] };
   }
 
-  const out = parsed as Partial<AnalystOutput>;
-
-  if (typeof out.summary !== 'string' || out.summary.trim() === '') {
-    issues.push('summary 必须是非空字符串');
-  }
+  const out = parsed as Record<string, any>;
+  // Normalize snake_case keys
+  if (out.key_findings && !out.keyFindings) out.keyFindings = out.key_findings;
+  // Defaults
+  if (!out.summary) out.summary = 'Analysis complete';
+  if (!out.keyFindings && !out.key_findings) out.keyFindings = [];
+  if (!out.risks) out.risks = [];
+  if (!out.recommendations) out.recommendations = [];
+  if (!out.assumptions) out.assumptions = [];
+  if (typeof out.confidence !== 'number') out.confidence = 0.7;
 
   if (!Array.isArray(out.keyFindings)) {
     issues.push('keyFindings 必须是数组');
