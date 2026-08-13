@@ -2,7 +2,7 @@ import Koa from 'koa';
 import cors from '@koa/cors';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
-import 'dotenv/config';
+import './load-env';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
