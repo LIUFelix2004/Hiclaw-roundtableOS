@@ -1,6 +1,8 @@
 import OpenAI from 'openai';
 import type { AgentRole, ErrorType } from '@hermes/shared';
 
+export type ModelProvider = 'openai' | 'anthropic' | 'deepseek' | 'mock';
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder',
   baseURL: process.env.OPENAI_BASE_URL,
@@ -62,6 +64,27 @@ function calcCost(model: string, inputTokens: number, outputTokens: number): num
  */
 export function isMockEnabled(): boolean {
   return process.env.MOCK_LLM === '1' || !process.env.OPENAI_API_KEY;
+}
+
+export function resolveProvider(model?: string): ModelProvider {
+  const prefix = model?.split(':')[0];
+  if (prefix === 'openai' || prefix === 'anthropic' || prefix === 'deepseek') {
+    return prefix;
+  }
+  const explicit = (process.env.LLM_PROVIDER || 'auto').toLowerCase();
+  if (explicit === 'openai' || explicit === 'anthropic' || explicit === 'deepseek') {
+    return explicit;
+  }
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
+  if (process.env.DEEPSEEK_API_KEY) return 'deepseek';
+  return 'openai';
+}
+
+export function estimateTokens(text: string): number {
+  if (!text) return 0;
+  const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g) ?? []).length;
+  const other = Math.max(0, text.length - cjk);
+  return Math.max(1, Math.ceil(cjk * 0.9 + other / 4));
 }
 
 interface MockDataPoint {
