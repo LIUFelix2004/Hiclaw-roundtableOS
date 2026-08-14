@@ -19,16 +19,25 @@ export const MODEL_FALLBACKS: Record<AgentRole, string[]> = {
   rollback: [process.env.MODEL_ROLLBACK || 'gpt-5.5', 'gpt-5.4'],
 };
 
-const MODEL_MAP = Object.fromEntries(
-  Object.entries(MODEL_FALLBACKS).map(([role, fallbacks]) => [role, fallbacks[0]]),
-) as Record<AgentRole, string>;
+/**
+ * The Planner drives task decomposition rather than a DAG node, so it is not an
+ * AgentRole. It still needs its own model slot; MODEL_PLANNER is documented in
+ * .env.example and is honoured here.
+ */
+export type ChatRole = AgentRole | 'planner';
 
-export function getDefaultModel(role: AgentRole): string {
-  return MODEL_FALLBACKS[role]?.[0] ?? 'gpt-5.5';
+const PLANNER_MODELS = [process.env.MODEL_PLANNER || 'gpt-5.5', 'gpt-5.4'];
+
+function modelsFor(role: ChatRole): string[] {
+  return role === 'planner' ? PLANNER_MODELS : MODEL_FALLBACKS[role] ?? [];
+}
+
+export function getDefaultModel(role: ChatRole): string {
+  return modelsFor(role)[0] ?? 'gpt-5.5';
 }
 
 export interface ChatOptions {
-  role: AgentRole;
+  role: ChatRole;
   model?: string;
   systemPrompt: string;
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
@@ -43,6 +52,15 @@ export interface ChatResult {
   tokens: number;
   cost: number;
   model: string;
+  /**
+   * Usage breakdown consumed by SkillAgent when it emits agent:output and
+   * agent:trace. AgentOutput / AgentTraceRecord in @hermes/shared already
+   * declare these fields, so chat() has to supply them or the dashboard shows
+   * blanks for provider and per-direction token counts.
+   */
+  provider: ModelProvider;
+  inputTokens: number;
+  outputTokens: number;
 }
 
 /**
@@ -80,9 +98,11 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function mockChat(options: ChatOptions): Promise<ChatResult> {
-  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-5.5';
+  const model = options.model ?? getDefaultModel(options.role);
   const task = options.messages.map((m) => m.content).join('\n');
-  const content = MOCK_TEMPLATES[options.role](task);
+  const template =
+    options.role === 'planner' ? undefined : MOCK_TEMPLATES[options.role];
+  const content = template ? template(task) : task;
 
   // Simulate streaming so the canvas shows the same UX as real model calls.
   const chunkSize = 6;
@@ -95,11 +115,19 @@ async function mockChat(options: ChatOptions): Promise<ChatResult> {
   const outputTokens = Math.ceil(content.length / 4);
   const cost = calcCost(model, inputTokens, outputTokens);
 
-  return { content, tokens: inputTokens + outputTokens, cost, model };
+  return {
+    content,
+    tokens: inputTokens + outputTokens,
+    cost,
+    model,
+    provider: 'mock',
+    inputTokens,
+    outputTokens,
+  };
 }
 
 export async function chat(options: ChatOptions): Promise<ChatResult> {
-  const model = options.model ?? MODEL_MAP[options.role] ?? 'gpt-5.5';
+  const model = options.model ?? getDefaultModel(options.role);
 
   if (isMockEnabled()) {
     return mockChat(options);
@@ -122,11 +150,21 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
   const content = response.choices[0]?.message?.content ?? '';
   if (content && options.onChunk) options.onChunk(content);
 
-  // Estimate tokens (rough heuristic: ~4 chars per token)
-  const inputChars = options.systemPrompt.length + options.messages.reduce((s, m) => s + m.content.length, 0);
-  const inputTokens = Math.ceil(inputChars / 4);
-  const outputTokens = Math.ceil(content.length / 4);
+  // Prefer the provider's own usage numbers; fall back to the CJK-aware
+  // estimator when the gateway omits them.
+  const inputText =
+    options.systemPrompt + options.messages.map((m) => m.content).join('\n');
+  const inputTokens = response.usage?.prompt_tokens ?? estimateTokens(inputText);
+  const outputTokens = response.usage?.completion_tokens ?? estimateTokens(content);
   const cost = calcCost(model, inputTokens, outputTokens);
 
-  return { content, tokens: inputTokens + outputTokens, cost, model };
+  return {
+    content,
+    tokens: response.usage?.total_tokens ?? inputTokens + outputTokens,
+    cost,
+    model,
+    provider: resolveProvider(options.model),
+    inputTokens,
+    outputTokens,
+  };
 }

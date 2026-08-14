@@ -407,12 +407,15 @@ export async function handleCompetitionRun(
     finishSuccess(outputParts.join(''))
   })
 
-  // error
-  backendSocket.on('error', (payload: { message: string }) => {
+  // error — the backend emits task:error (Socket.IO v4 reserves 'error' on the
+  // client side); 'error' stays wired for older backend builds.
+  const onBackendError = (payload: { message: string }) => {
     if (finished) return
     clearTimeout(timer)
     finishError(payload.message)
-  })
+  }
+  backendSocket.on('task:error', onBackendError)
+  backendSocket.on('error', onBackendError)
 
   // Handle socket disconnect
   backendSocket.on('disconnect', (reason) => {
@@ -507,14 +510,16 @@ export function handleCompetitionRoundtable(
       cleanup()
     })
 
-    backendSocket.on('error', (data: { message: string }) => {
+    const onRoundtableError = (data: { message: string }) => {
       logger.error('[competition-roundtable] backend error: %s', data?.message)
       if (!finished) {
         socket.emit('roundtable:error', { message: data?.message || 'Backend error' })
       }
       clearTimeout(timer)
       cleanup()
-    })
+    }
+    backendSocket.on('roundtable:error', onRoundtableError)
+    backendSocket.on('error', onRoundtableError)
 
     backendSocket.on('disconnect', (reason: string) => {
       logger.info('[competition-roundtable] backend disconnected: %s, finished=%s', reason, finished)

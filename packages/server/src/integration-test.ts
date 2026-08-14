@@ -159,7 +159,7 @@ async function main(): Promise<void> {
   const rollbackStartPromise = waitForEvent(socket, 'rollback:start', () => true, 60000);
   const errorPromise = waitForEvent(
     socket,
-    'error',
+    'task:error',
     (data) => data.message.includes('Validator 拦截') || data.message.includes('Task failed'),
     90000,
   );

@@ -43,5 +43,12 @@ export interface ServerToClientEvents {
   'memory:updated': (data: ExperienceRecord) => void;
   'roundtable:speech': (data: RoundtableSpeech) => void;
   'roundtable:consensus': (data: RoundtableConsensus) => void;
+  /**
+   * Socket.IO v4 reserves 'error' on the client, so task and roundtable
+   * failures ship under their own names. Keep 'error' declared for older
+   * listeners, but the server emits the two specific events below.
+   */
+  'task:error': (data: { message: string }) => void;
+  'roundtable:error': (data: { message: string }) => void;
   'error': (data: { message: string }) => void;
 }

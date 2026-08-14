@@ -31,8 +31,8 @@ export function ChatView() {
     const error = ({ message }: { message: string }) => setMessages((current) => [...current, { id: `error-${Date.now()}`, type: 'error', content: message }]);
     const rollbackStart = (event: RollbackEvent) => { setRollbackStarted(event); setRollbackCompleted(null); };
     const rollbackComplete = (event: RollbackResult | RollbackCompleteEvent) => { setRollbackCompleted(toRollbackCompleteView(event)); setRollbackStarted(null); };
-    on('task:plan', plan); on('agent:status', status); on('agent:stream', stream); on('agent:output', output); on('agent:error', error); on('error', error); on('rollback:start', rollbackStart); on('rollback:complete', rollbackComplete);
-    return () => { off('task:plan', plan); off('agent:status', status); off('agent:stream', stream); off('agent:output', output); off('agent:error', error); off('error', error); off('rollback:start', rollbackStart); off('rollback:complete', rollbackComplete); };
+    on('task:plan', plan); on('agent:status', status); on('agent:stream', stream); on('agent:output', output); on('agent:error', error); on('task:error', error); on('error', error); on('rollback:start', rollbackStart); on('rollback:complete', rollbackComplete);
+    return () => { off('task:plan', plan); off('agent:status', status); off('agent:stream', stream); off('agent:output', output); off('agent:error', error); off('task:error', error); off('error', error); off('rollback:start', rollbackStart); off('rollback:complete', rollbackComplete); };
   }, [on, off]);
 
   const submit = (event: FormEvent) => { event.preventDefault(); const message = input.trim(); if (!message || sending) return; setMessages((current) => [...current, { id: `user-${Date.now()}`, type: 'user', content: message }]); emit('task:create', { message }); setInput(''); setSending(true); window.setTimeout(() => setSending(false), 500); };
