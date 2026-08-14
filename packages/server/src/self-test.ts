@@ -184,7 +184,7 @@ async function testPlanner(): Promise<void> {
       resolveProvider('anthropic:claude-sonnet-4-20250514') === 'anthropic',
       'anthropic prefix should route to anthropic',
     );
-    assert(resolveProvider('gpt-4o') === 'openai', 'unprefixed model should default to openai');
+    assert(resolveProvider('gpt-5.5') === 'openai', 'unprefixed model should default to openai');
     assert(estimateTokens('hello world') > 0, 'estimateTokens should return positive count');
     assert(
       estimateTokens('储能新增装机量同比大幅增长') > 0,
@@ -420,25 +420,25 @@ console.log('\n=== Test 11: Experience Memory ===');
 async function testExperienceMemory(): Promise<void> {
   process.env.MOCK_LLM = '1';
   experienceMemory.clear();
-  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o', success: true });
-  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o', success: false });
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-5.5', success: true });
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-5.5', success: false });
 
   const stats = experienceMemory.stats();
   assert(stats.total === 2, `memory total should be 2, got ${stats.total}`);
   assert(stats.success === 1 && stats.failure === 1, 'memory should have 1 success and 1 failure');
   assert(
-    experienceMemory.pickModel('analyst', 'analysis') === 'gpt-4o',
-    'memory should still pick gpt-4o after a 50% rate when it is the only tried model',
+    experienceMemory.pickModel('analyst', 'analysis') === 'gpt-5.5',
+    'memory should still pick gpt-5.5 after a 50% rate when it is the only tried model',
   );
 
-  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o-mini', success: true });
-  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-4o-mini', success: true });
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-5.4', success: true });
+  await experienceMemory.record({ taskType: 'analysis', agent: 'analyst', model: 'gpt-5.4', success: true });
   assert(
-    experienceMemory.pickModel('analyst', 'analysis') === 'gpt-4o-mini',
-    'memory should switch to gpt-4o-mini after 100% success',
+    experienceMemory.pickModel('analyst', 'analysis') === 'gpt-5.4',
+    'memory should switch to gpt-5.4 after 100% success',
   );
   assert(
-    experienceMemory.pickFallback('analyst', 'gpt-4o-mini')[0] === 'gpt-4o',
+    experienceMemory.pickFallback('analyst', 'gpt-5.4')[0] === 'gpt-5.5',
     'fallback order should prefer the remaining tried model',
   );
 
@@ -466,7 +466,7 @@ async function testRollbackEngine(): Promise<void> {
     timestamp: Date.now(),
     input: { taskId: 'rb-snap', task: '分析' },
     output: { summary: 'restored output' },
-    model: 'gpt-4o',
+    model: 'gpt-5.5',
     status: 'success',
   } as any);
 
@@ -476,7 +476,7 @@ async function testRollbackEngine(): Promise<void> {
     taskTitle: 'Analyze',
     role: 'analyst',
     errorType: 'MODEL_ERROR',
-    fromModel: 'gpt-4o',
+    fromModel: 'gpt-5.5',
     input: '分析',
     context: '--- Output from [data] ---\n{}',
     agent: new AnalystAgent(),
@@ -507,7 +507,7 @@ async function testRollbackEngine(): Promise<void> {
       _execCtx: unknown,
       modelOverride?: string,
     ) => {
-      if (modelOverride === 'gpt-4o-mini') {
+      if (modelOverride === 'gpt-5.4') {
         return {
           taskId: 'rb-switch',
           role: 'analyst',
@@ -515,7 +515,7 @@ async function testRollbackEngine(): Promise<void> {
           tokens: 10,
           cost: 0.001,
           duration: 10,
-          model: 'gpt-4o-mini',
+          model: 'gpt-5.4',
         };
       }
       throw new Error('model failed');
@@ -527,7 +527,7 @@ async function testRollbackEngine(): Promise<void> {
     taskTitle: 'Analyze',
     role: 'analyst',
     errorType: 'MODEL_ERROR',
-    fromModel: 'gpt-4o',
+    fromModel: 'gpt-5.5',
     input: '分析',
     context: '--- Output from [data] ---\n{}',
     agent: flakyAgent,
@@ -535,8 +535,8 @@ async function testRollbackEngine(): Promise<void> {
     failureMessage: 'model failed',
   });
   assert(outcome2.recovered, 'model switch should recover the task');
-  assert(outcome2.result?.model === 'gpt-4o-mini', 'recovered result should use the fallback model');
-  assert(outcome2.toModel === 'gpt-4o-mini', 'outcome should report the fallback model');
+  assert(outcome2.result?.model === 'gpt-5.4', 'recovered result should use the fallback model');
+  assert(outcome2.toModel === 'gpt-5.4', 'outcome should report the fallback model');
 
   console.log('  Rollback Engine: snapshot restore + model switch passed');
 }
@@ -551,14 +551,14 @@ async function testStats(): Promise<void> {
     agent: 'analyst',
     tokens: 120,
     cost: 0.001,
-    model: 'gpt-4o',
+    model: 'gpt-5.5',
   });
   statsService.observe('agent:output', {
     taskId: 't2',
     agent: 'data',
     tokens: 80,
     cost: 0.0005,
-    model: 'gpt-4o-mini',
+    model: 'gpt-5.4',
   });
   statsService.observe('rollback:complete', { taskId: 't3', recovered: true });
   statsService.observe('roundtable:consensus', { topic: '新能源圆桌', rounds: 2, finalAnswer: 'x' });
@@ -570,7 +570,7 @@ async function testStats(): Promise<void> {
 
   const cost = statsService.getCost();
   assert(Math.abs(cost.total - 0.0015) < 1e-9, `cost total should be 0.0015, got ${cost.total}`);
-  assert(Math.abs(cost.byModel['gpt-4o'] - 0.001) < 1e-9, 'cost byModel should track gpt-4o');
+  assert(Math.abs(cost.byModel['gpt-5.5'] - 0.001) < 1e-9, 'cost byModel should track gpt-5.5');
 
   const roundtable = statsService.getRoundtable();
   assert(roundtable.total === 1 && roundtable.rounds === 2, 'roundtable stats should track count and rounds');

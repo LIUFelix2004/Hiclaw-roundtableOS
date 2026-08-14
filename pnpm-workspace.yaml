@@ -1,6 +1,9 @@
 packages:
   - "packages/shared"
   - "packages/server"
+  - "packages/hiclaw-bridge"
+  - "packages/matrix-client"
+  - "packages/orchestrator"
   - "packages/web"
 allowBuilds:
   esbuild: true
