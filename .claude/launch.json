@@ -3,12 +3,13 @@
   "configurations": [
     {
       "name": "hermes-studio",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
       "runtimeArgs": ["run", "dev"],
       "cwd": "packages/hermes-studio",
       "port": 8649,
       "url": "http://localhost:8649",
       "env": {
+        "PATH": "C:\\Program Files\\nodejs;C:\\Windows\\system32;C:\\Windows;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Git\\mingw64\\bin",
         "HERMES_COMPETITION_MODE": "1",
         "HERMES_COMPETITION_BACKEND_URL": "http://127.0.0.1:8648",
         "HERMES_WEB_UI_DISABLE_GATEWAY_AUTOSTART": "1",

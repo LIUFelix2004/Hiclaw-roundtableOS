@@ -24,7 +24,7 @@ export class ModeratorAgent extends SkillAgent<ModeratorOutput> {
       model: 'auto',
       systemPrompt: SYSTEM_PROMPT,
       temperature: 0.3,
-      maxTokens: 4096,
+      maxTokens: 8192,
       retryCount: 4,
       timeout: 120000,
     };
