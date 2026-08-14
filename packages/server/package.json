@@ -11,6 +11,7 @@
     "start": "tsx src/index.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
     "@hermes/shared": "workspace:*",
     "@koa/cors": "^5.0.0",
     "dotenv": "^16.4.0",

@@ -1,13 +1,37 @@
 import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import type { AgentRole } from '@hermes/shared';
 import { MOCK_TEMPLATES, calcCost } from '@hermes/shared';
 
 export type ModelProvider = 'openai' | 'anthropic' | 'deepseek' | 'mock';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder',
-  baseURL: process.env.OPENAI_BASE_URL,
-});
+/**
+ * Clients are built lazily so that importing this module never requires a key.
+ * DeepSeek speaks the OpenAI wire format, so it reuses the OpenAI SDK with its
+ * own base URL; Anthropic has its own protocol and uses the official SDK.
+ */
+const clients: { openai?: OpenAI; deepseek?: OpenAI; anthropic?: Anthropic } = {};
+
+function openaiClient(): OpenAI {
+  return (clients.openai ??= new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || 'sk-placeholder',
+    baseURL: process.env.OPENAI_BASE_URL,
+  }));
+}
+
+function deepseekClient(): OpenAI {
+  return (clients.deepseek ??= new OpenAI({
+    apiKey: process.env.DEEPSEEK_API_KEY || 'sk-placeholder',
+    baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
+  }));
+}
+
+function anthropicClient(): Anthropic {
+  return (clients.anthropic ??= new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    baseURL: process.env.ANTHROPIC_BASE_URL,
+  }));
+}
 
 export const MODEL_FALLBACKS: Record<AgentRole, string[]> = {
   data: [process.env.MODEL_DATA || 'gpt-5.5', 'gpt-5.4'],
@@ -63,16 +87,40 @@ export interface ChatResult {
   outputTokens: number;
 }
 
-/**
- * Mock mode: MOCK_LLM=1 forces built-in demo data.
- * If no OPENAI_API_KEY is configured, mock mode is enabled automatically
- * so the demo can run offline without any model gateway.
- */
-export function isMockEnabled(): boolean {
-  return process.env.MOCK_LLM === '1' || !process.env.OPENAI_API_KEY;
+export function hasProviderKey(provider: ModelProvider): boolean {
+  switch (provider) {
+    case 'openai':
+      return !!process.env.OPENAI_API_KEY;
+    case 'anthropic':
+      return !!process.env.ANTHROPIC_API_KEY;
+    case 'deepseek':
+      return !!process.env.DEEPSEEK_API_KEY;
+    default:
+      return true;
+  }
 }
 
-export function resolveProvider(model?: string): ModelProvider {
+/**
+ * Mock mode: MOCK_LLM=1 forces built-in demo data, and so does having no
+ * provider key at all.
+ *
+ * This deliberately checks every supported provider rather than OPENAI_API_KEY
+ * alone: configuring only ANTHROPIC_API_KEY used to leave the system silently
+ * in mock mode, so a demo looked live while still replaying canned data.
+ */
+export function isMockEnabled(): boolean {
+  if (process.env.MOCK_LLM === '1') return true;
+  return !(
+    process.env.OPENAI_API_KEY ||
+    process.env.ANTHROPIC_API_KEY ||
+    process.env.DEEPSEEK_API_KEY
+  );
+}
+
+/** The providers `chat()` can actually dispatch to (mock is a separate mode). */
+export type LiveProvider = Exclude<ModelProvider, 'mock'>;
+
+export function resolveProvider(model?: string): LiveProvider {
   const prefix = model?.split(':')[0];
   if (prefix === 'openai' || prefix === 'anthropic' || prefix === 'deepseek') {
     return prefix;
@@ -81,9 +129,18 @@ export function resolveProvider(model?: string): ModelProvider {
   if (explicit === 'openai' || explicit === 'anthropic' || explicit === 'deepseek') {
     return explicit;
   }
+  // auto: prefer a provider whose key is actually present.
   if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
   if (process.env.DEEPSEEK_API_KEY) return 'deepseek';
   return 'openai';
+}
+
+/** `anthropic:claude-opus-5` -> `claude-opus-5`. */
+export function stripProviderPrefix(model: string): string {
+  const [head, ...rest] = model.split(':');
+  return head === 'openai' || head === 'anthropic' || head === 'deepseek'
+    ? rest.join(':')
+    : model;
 }
 
 export function estimateTokens(text: string): number {
@@ -126,14 +183,18 @@ async function mockChat(options: ChatOptions): Promise<ChatResult> {
   };
 }
 
-export async function chat(options: ChatOptions): Promise<ChatResult> {
-  const model = options.model ?? getDefaultModel(options.role);
+function inputTextOf(options: ChatOptions): string {
+  return options.systemPrompt + options.messages.map((m) => m.content).join('\n');
+}
 
-  if (isMockEnabled()) {
-    return mockChat(options);
-  }
-
-  const response = await openai.chat.completions.create(
+/** OpenAI and DeepSeek share the same wire format. */
+async function openAiCompatibleChat(
+  options: ChatOptions,
+  provider: 'openai' | 'deepseek',
+  model: string,
+): Promise<ChatResult> {
+  const client = provider === 'deepseek' ? deepseekClient() : openaiClient();
+  const response = await client.chat.completions.create(
     {
       model,
       messages: [
@@ -152,19 +213,78 @@ export async function chat(options: ChatOptions): Promise<ChatResult> {
 
   // Prefer the provider's own usage numbers; fall back to the CJK-aware
   // estimator when the gateway omits them.
-  const inputText =
-    options.systemPrompt + options.messages.map((m) => m.content).join('\n');
-  const inputTokens = response.usage?.prompt_tokens ?? estimateTokens(inputText);
+  const inputTokens = response.usage?.prompt_tokens ?? estimateTokens(inputTextOf(options));
   const outputTokens = response.usage?.completion_tokens ?? estimateTokens(content);
-  const cost = calcCost(model, inputTokens, outputTokens);
 
   return {
     content,
     tokens: response.usage?.total_tokens ?? inputTokens + outputTokens,
-    cost,
+    cost: calcCost(model, inputTokens, outputTokens),
     model,
-    provider: resolveProvider(options.model),
+    provider,
     inputTokens,
     outputTokens,
   };
+}
+
+async function anthropicChat(options: ChatOptions, model: string): Promise<ChatResult> {
+  const response = await anthropicClient().messages.create(
+    {
+      model,
+      // Claude counts thinking against max_tokens, and thinking is on by
+      // default on current models. Agents ask for 4096 to hold a JSON payload,
+      // which would leave almost nothing for the answer — so give a floor.
+      max_tokens: Math.max(options.maxTokens ?? 2048, 8192),
+      system: options.systemPrompt,
+      messages: options.messages.map((m) => ({ role: m.role, content: m.content })),
+      // temperature is rejected by current Claude models; steer via the prompt.
+    },
+    { signal: options.timeoutMs ? AbortSignal.timeout(options.timeoutMs) : undefined },
+  );
+
+  if (response.stop_reason === 'refusal') {
+    throw new Error(
+      `POLICY_ERROR: Anthropic 安全策略拒绝了该请求 (${response.stop_details?.category ?? 'unknown'})`,
+    );
+  }
+
+  const content = response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map((block) => block.text)
+    .join('');
+  if (content && options.onChunk) options.onChunk(content);
+
+  const inputTokens = response.usage.input_tokens;
+  const outputTokens = response.usage.output_tokens;
+
+  return {
+    content,
+    tokens: inputTokens + outputTokens,
+    cost: calcCost(model, inputTokens, outputTokens),
+    model,
+    provider: 'anthropic',
+    inputTokens,
+    outputTokens,
+  };
+}
+
+export async function chat(options: ChatOptions): Promise<ChatResult> {
+  const requested = options.model ?? getDefaultModel(options.role);
+
+  if (isMockEnabled()) {
+    return mockChat(options);
+  }
+
+  const provider = resolveProvider(requested);
+  const model = stripProviderPrefix(requested);
+
+  if (!hasProviderKey(provider)) {
+    throw new Error(
+      `MODEL_ERROR: 模型 ${requested} 需要 ${provider} 凭据，但对应的 API key 未配置`,
+    );
+  }
+
+  return provider === 'anthropic'
+    ? anthropicChat(options, model)
+    : openAiCompatibleChat(options, provider, model);
 }

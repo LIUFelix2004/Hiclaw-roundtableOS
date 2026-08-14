@@ -355,6 +355,14 @@ export const PRICING: Record<string, { input: number; output: number }> = {
   'gpt-5.6-luna': { input: 5, output: 15 },
   'gpt-5.6-sol': { input: 5, output: 15 },
   'gpt-5.6-terra': { input: 5, output: 15 },
+  // Anthropic list prices (USD per 1M tokens).
+  'claude-opus-5': { input: 5, output: 25 },
+  'claude-opus-4-8': { input: 5, output: 25 },
+  'claude-sonnet-5': { input: 3, output: 15 },
+  'claude-haiku-4-5': { input: 1, output: 5 },
+  // DeepSeek
+  'deepseek-chat': { input: 0.27, output: 1.1 },
+  'deepseek-reasoner': { input: 0.55, output: 2.19 },
 };
 
 export function calcCost(model: string, inputTokens: number, outputTokens: number): number {

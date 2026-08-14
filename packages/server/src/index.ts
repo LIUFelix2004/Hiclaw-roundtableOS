@@ -29,7 +29,9 @@ app.use(async (ctx, next) => {
           status: 'ok',
           service: 'hermes-agentos-server',
           mock: isMockEnabled(),
-          provider: resolveProvider(),
+          // The provider actually in use — 'mock' when no real call is made,
+          // so /health never claims a live provider while replaying demo data.
+          provider: isMockEnabled() ? 'mock' : resolveProvider(),
           uptime: process.uptime(),
         };
         return;

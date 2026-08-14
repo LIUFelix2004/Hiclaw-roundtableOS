@@ -5,7 +5,13 @@
  * Run with: npx tsx packages/server/src/self-test.ts
  */
 import { Planner, parsePlannerPlan } from './planner';
-import { estimateTokens, resolveProvider } from './llm';
+import {
+  estimateTokens,
+  hasProviderKey,
+  isMockEnabled,
+  resolveProvider,
+  stripProviderPrefix,
+} from './llm';
 import { TaskScheduler } from './scheduler';
 import type { AgentRole, SubTask } from '@hermes/shared';
 import { AnalystAgent, DataAgent, ResearchAgent, ValidatorAgent, WriterAgent } from './agents';
@@ -185,6 +191,42 @@ async function testPlanner(): Promise<void> {
       'anthropic prefix should route to anthropic',
     );
     assert(resolveProvider('gpt-5.5') === 'openai', 'unprefixed model should default to openai');
+
+    assert(
+      stripProviderPrefix('anthropic:claude-opus-5') === 'claude-opus-5',
+      'provider prefix should be stripped before the model reaches the SDK',
+    );
+    assert(
+      stripProviderPrefix('gpt-5.5') === 'gpt-5.5',
+      'unprefixed model should pass through unchanged',
+    );
+
+    assert(hasProviderKey('openai'), 'openai key should be detected');
+    assert(!hasProviderKey('anthropic'), 'missing anthropic key should be reported');
+
+    // Regression: configuring only ANTHROPIC_API_KEY used to leave the system
+    // silently in mock mode, so a demo looked live while replaying demo data.
+    const savedMock = process.env.MOCK_LLM;
+    delete process.env.MOCK_LLM;
+    delete process.env.OPENAI_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-self-test';
+    try {
+      assert(
+        !isMockEnabled(),
+        'an anthropic-only configuration should leave mock mode',
+      );
+      assert(
+        resolveProvider() === 'anthropic',
+        'auto routing should pick the provider whose key is present',
+      );
+      delete process.env.ANTHROPIC_API_KEY;
+      assert(isMockEnabled(), 'no provider key at all should fall back to mock');
+    } finally {
+      if (savedMock !== undefined) process.env.MOCK_LLM = savedMock;
+      process.env.OPENAI_API_KEY = 'sk-self-test';
+      delete process.env.ANTHROPIC_API_KEY;
+    }
+
     assert(estimateTokens('hello world') > 0, 'estimateTokens should return positive count');
     assert(
       estimateTokens('储能新增装机量同比大幅增长') > 0,
