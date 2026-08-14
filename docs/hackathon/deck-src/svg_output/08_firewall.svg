@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" data-pptx-page-role="content">
+  <defs>
+    <linearGradient id="glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22345C" stop-opacity="0.34" />
+      <stop offset="100%" stop-color="#0A1024" stop-opacity="0.10" />
+    </linearGradient>
+    <linearGradient id="glassSoft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B2C50" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#080F22" stop-opacity="0.10" />
+    </linearGradient>
+    <linearGradient id="glassHot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4C6FFF" stop-opacity="0.20" />
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.06" />
+    </linearGradient>
+    <linearGradient id="edgeTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6E8CFF" />
+      <stop offset="52%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#22D3EE" />
+    </linearGradient>
+    <radialGradient id="aurora" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3B5BFF" stop-opacity="0.40" />
+      <stop offset="55%" stop-color="#2A2F8F" stop-opacity="0.14" />
+      <stop offset="100%" stop-color="#050A18" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="auroraCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0E9BB0" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#050A18" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="tableTop" cx="50%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#2C4C9E" stop-opacity="0.62" />
+      <stop offset="60%" stop-color="#16264C" stop-opacity="0.50" />
+      <stop offset="100%" stop-color="#0A1024" stop-opacity="0.34" />
+    </radialGradient>
+    <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#4C6FFF" flood-opacity="0.55" />
+    </filter>
+    <filter id="glowViolet" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#8B5CF6" flood-opacity="0.55" />
+    </filter>
+    <filter id="glowCyan" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#22D3EE" flood-opacity="0.50" />
+    </filter>
+    <filter id="softDrop" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.38" />
+    </filter>
+    <marker id="arrowHi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#33507F" />
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#4C6FFF" />
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#10B981" />
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#EF4444" />
+    </marker>
+    <marker id="arrowViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#8B5CF6" />
+    </marker>
+  </defs>
+
+  <g id="bg" data-pptx-bounds="0.0 0.0 1280.0 720.0">
+    <rect id="page-bg" width="1280" height="720" fill="#050A18" />
+    <line x1="0" y1="0" x2="0" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="64" y1="0" x2="64" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="128" y1="0" x2="128" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="192" y1="0" x2="192" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="256" y1="0" x2="256" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="320" y1="0" x2="320" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="384" y1="0" x2="384" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="448" y1="0" x2="448" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="512" y1="0" x2="512" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="576" y1="0" x2="576" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="640" y1="0" x2="640" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="704" y1="0" x2="704" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="768" y1="0" x2="768" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="832" y1="0" x2="832" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="896" y1="0" x2="896" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="960" y1="0" x2="960" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1024" y1="0" x2="1024" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1088" y1="0" x2="1088" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1152" y1="0" x2="1152" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1216" y1="0" x2="1216" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1280" y1="0" x2="1280" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="0" x2="1280" y2="0" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="64" x2="1280" y2="64" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="128" x2="1280" y2="128" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="192" x2="1280" y2="192" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="256" x2="1280" y2="256" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="320" x2="1280" y2="320" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="384" x2="1280" y2="384" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="448" x2="1280" y2="448" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="512" x2="1280" y2="512" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="576" x2="1280" y2="576" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="640" x2="1280" y2="640" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="704" x2="1280" y2="704" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <ellipse cx="300" cy="120" rx="520" ry="400" fill="url(#aurora)" />
+    <ellipse cx="1140" cy="640" rx="440" ry="320" fill="url(#auroraCyan)" />
+  </g>
+
+  <g id="header" data-pptx-bounds="72.0 67.0 566.3 99.0">
+    <text x="72" y="78" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="12" fill="#10B981" font-weight="700" letter-spacing="3">圆桌 05 / FIREWALL</text>
+    <text x="72" y="130" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="38" fill="#F1F5F9" font-weight="900">共识也要过闸：出口防火墙</text>
+    <text x="72" y="162" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#5E7093">圆桌讨论出的最终方案没有豁免权 —— 不过质检，就不允许发布</text>
+  </g>
+
+  <g id="firewall-flow" data-pptx-bounds="72.0 232.0 1136.0 100.0">
+    <rect x="72" y="244" width="200" height="74" rx="12" ry="12" fill="url(#glassSoft)" stroke="#8B5CF6" stroke-width="1" />
+    <text x="172" y="280" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="17" fill="#F1F5F9" font-weight="700" text-anchor="middle">圆桌共识</text>
+    <text x="172" y="300" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#5E7093" text-anchor="middle" letter-spacing="1.6">CONSENSUS</text>
+    <line x1="280" y1="281" x2="320" y2="281" stroke="#33507F" stroke-width="1.4" marker-end="url(#arrowHi)" />
+    <rect x="328" y="232" width="268" height="98" rx="12" ry="12" fill="url(#glassHot)" stroke="#22D3EE" stroke-width="1" />
+    <text x="462" y="268" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="20" fill="#F1F5F9" font-weight="900" text-anchor="middle">Validator</text>
+    <text x="462" y="292" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#9FB0CC" text-anchor="middle">四维评分 · 一票否决</text>
+    <text x="462" y="314" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#22D3EE" text-anchor="middle" letter-spacing="2">OUTPUT  FIREWALL</text>
+    <line x1="604" y1="281" x2="634" y2="281" stroke="#1E2C4A" stroke-width="1.2" />
+    <line x1="634" y1="252" x2="634" y2="310" stroke="#1E2C4A" stroke-width="1.2" />
+    <line x1="634" y1="252" x2="666" y2="252" stroke="#10B981" stroke-width="1.4" marker-end="url(#arrowGreen)" />
+    <line x1="634" y1="310" x2="666" y2="310" stroke="#EF4444" stroke-width="1.4" marker-end="url(#arrowRed)" />
+    <rect x="676" y="232" width="532" height="42" rx="21" ry="21" fill="#10B981" fill-opacity="0.10" stroke="#10B981" stroke-opacity="0.6" stroke-width="1" />
+    <text x="700" y="259" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#10B981">pass  →  共识发布，执行任务进入流水线</text>
+    <rect x="676" y="290" width="532" height="42" rx="21" ry="21" fill="#EF4444" fill-opacity="0.10" stroke="#EF4444" stroke-opacity="0.6" stroke-width="1" />
+    <text x="700" y="317" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#EF4444">fail  →  failCodes 驱动回滚，主持人重新合成</text>
+  </g>
+
+  <g id="dimensions" data-pptx-bounds="72.0 372.0 1136.0 150.0">
+    <rect x="72.0" y="372" width="266.0" height="150" rx="14" ry="14" fill="url(#glass)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="98.0" y="404" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#6366F1" letter-spacing="1.8">ACCURACY</text>
+    <text x="98.0" y="442" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="25" fill="#F1F5F9" font-weight="900">准确性</text>
+    <line x1="98.0" y1="462" x2="132.0" y2="462" stroke="#6366F1" stroke-width="2" />
+    <text x="98.0" y="490" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">事实与数据是否站得住</text>
+    <rect x="362.0" y="372" width="266.0" height="150" rx="14" ry="14" fill="url(#glass)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="388.0" y="404" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#22D3EE" letter-spacing="1.8">COMPLETENESS</text>
+    <text x="388.0" y="442" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="25" fill="#F1F5F9" font-weight="900">完整性</text>
+    <line x1="388.0" y1="462" x2="422.0" y2="462" stroke="#22D3EE" stroke-width="2" />
+    <text x="388.0" y="490" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">议题要求是否全部覆盖</text>
+    <rect x="652.0" y="372" width="266.0" height="150" rx="14" ry="14" fill="url(#glass)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="678.0" y="404" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#EF4444" letter-spacing="1.8">SAFETY</text>
+    <text x="678.0" y="442" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="25" fill="#F1F5F9" font-weight="900">安全性</text>
+    <line x1="678.0" y1="462" x2="712.0" y2="462" stroke="#EF4444" stroke-width="2" />
+    <text x="678.0" y="490" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">是否越界或含有害内容</text>
+    <rect x="942.0" y="372" width="266.0" height="150" rx="14" ry="14" fill="url(#glass)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="968.0" y="404" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#10B981" letter-spacing="1.8">FORMAT</text>
+    <text x="968.0" y="442" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="25" fill="#F1F5F9" font-weight="900">格式</text>
+    <line x1="968.0" y1="462" x2="1002.0" y2="462" stroke="#10B981" stroke-width="2" />
+    <text x="968.0" y="490" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">是否符合下游可消费的结构</text>
+  </g>
+
+  <g id="loop-note" data-pptx-bounds="72.0 553.1 642.0 42.8">
+    <text x="72" y="566" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#9FB0CC">拦截不是终点：每次不通过都会触发一轮恢复，最多五轮仍不过才升级为人工工单。</text>
+    <text x="72" y="592" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#5E7093">这条闸门同样作用于每一个 Agent 的中间产出，圆桌只是它守住的最后一道。</text>
+  </g>
+
+  <g id="page-footer" data-pptx-role="footer" data-pptx-bounds="72.0 664.0 1136.0 26.9">
+    <line x1="72" y1="664" x2="1208" y2="664" stroke="#1E2C4A" stroke-width="1" stroke-opacity="0.7" />
+    <text x="72" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" letter-spacing="2">HERMES  AGENTOS</text>
+    <text x="322" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" letter-spacing="1.4">出口防火墙</text>
+    <text x="1208" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#33507F" font-weight="700" text-anchor="end" letter-spacing="1.6">08 / 16</text>
+  </g>
+</svg>

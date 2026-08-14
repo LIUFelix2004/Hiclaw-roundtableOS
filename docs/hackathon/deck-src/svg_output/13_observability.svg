@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" data-pptx-page-role="content">
+  <defs>
+    <linearGradient id="glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22345C" stop-opacity="0.34" />
+      <stop offset="100%" stop-color="#0A1024" stop-opacity="0.10" />
+    </linearGradient>
+    <linearGradient id="glassSoft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B2C50" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#080F22" stop-opacity="0.10" />
+    </linearGradient>
+    <linearGradient id="glassHot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4C6FFF" stop-opacity="0.20" />
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.06" />
+    </linearGradient>
+    <linearGradient id="edgeTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6E8CFF" />
+      <stop offset="52%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#22D3EE" />
+    </linearGradient>
+    <radialGradient id="aurora" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3B5BFF" stop-opacity="0.40" />
+      <stop offset="55%" stop-color="#2A2F8F" stop-opacity="0.14" />
+      <stop offset="100%" stop-color="#050A18" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="auroraCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0E9BB0" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#050A18" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="tableTop" cx="50%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#2C4C9E" stop-opacity="0.62" />
+      <stop offset="60%" stop-color="#16264C" stop-opacity="0.50" />
+      <stop offset="100%" stop-color="#0A1024" stop-opacity="0.34" />
+    </radialGradient>
+    <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#4C6FFF" flood-opacity="0.55" />
+    </filter>
+    <filter id="glowViolet" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#8B5CF6" flood-opacity="0.55" />
+    </filter>
+    <filter id="glowCyan" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#22D3EE" flood-opacity="0.50" />
+    </filter>
+    <filter id="softDrop" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.38" />
+    </filter>
+    <marker id="arrowHi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#33507F" />
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#4C6FFF" />
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#10B981" />
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#EF4444" />
+    </marker>
+    <marker id="arrowViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#8B5CF6" />
+    </marker>
+  </defs>
+
+  <g id="bg" data-pptx-bounds="0.0 0.0 1280.0 720.0">
+    <rect id="page-bg" width="1280" height="720" fill="#050A18" />
+    <line x1="0" y1="0" x2="0" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="64" y1="0" x2="64" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="128" y1="0" x2="128" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="192" y1="0" x2="192" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="256" y1="0" x2="256" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="320" y1="0" x2="320" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="384" y1="0" x2="384" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="448" y1="0" x2="448" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="512" y1="0" x2="512" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="576" y1="0" x2="576" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="640" y1="0" x2="640" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="704" y1="0" x2="704" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="768" y1="0" x2="768" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="832" y1="0" x2="832" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="896" y1="0" x2="896" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="960" y1="0" x2="960" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1024" y1="0" x2="1024" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1088" y1="0" x2="1088" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1152" y1="0" x2="1152" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1216" y1="0" x2="1216" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="1280" y1="0" x2="1280" y2="720" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="0" x2="1280" y2="0" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="64" x2="1280" y2="64" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="128" x2="1280" y2="128" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="192" x2="1280" y2="192" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="256" x2="1280" y2="256" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="320" x2="1280" y2="320" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="384" x2="1280" y2="384" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="448" x2="1280" y2="448" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="512" x2="1280" y2="512" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="576" x2="1280" y2="576" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="640" x2="1280" y2="640" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <line x1="0" y1="704" x2="1280" y2="704" stroke="#24406E" stroke-width="1" stroke-opacity="0.10" />
+    <ellipse cx="640" cy="100" rx="600" ry="380" fill="url(#aurora)" />
+    <ellipse cx="1160" cy="650" rx="420" ry="320" fill="url(#auroraCyan)" />
+  </g>
+
+  <g id="header" data-pptx-bounds="72.0 67.0 650.2 99.0">
+    <text x="72" y="78" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="12" fill="#22D3EE" font-weight="700" letter-spacing="3">底座 03 / OBSERVABILITY</text>
+    <text x="72" y="130" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="38" fill="#F1F5F9" font-weight="900">过程怎么查：8 阶段全链路留痕</text>
+    <text x="72" y="162" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#5E7093">从上下文构建到模型调用再到输出校验，每一步都带模型、Token、成本与耗时</text>
+  </g>
+
+  <g id="trace-timeline" data-pptx-bounds="72.0 263.0 1136.0 85.0">
+    <line x1="137.75" y1="268" x2="1142.25" y2="268" stroke="#1E2C4A" stroke-width="1" />
+    <circle cx="137.75" cy="268" r="5" fill="#5E7093" />
+    <rect x="72.0" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="137.75" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" font-weight="700" text-anchor="middle" letter-spacing="0.8">START</text>
+    <circle cx="281.25" cy="268" r="5" fill="#4C6FFF" />
+    <rect x="215.5" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="281.25" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#4C6FFF" font-weight="700" text-anchor="middle" letter-spacing="0.8">CONTEXT</text>
+    <circle cx="424.75" cy="268" r="5" fill="#4C6FFF" />
+    <rect x="359.0" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="424.75" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#4C6FFF" font-weight="700" text-anchor="middle" letter-spacing="0.8">MODEL</text>
+    <circle cx="568.25" cy="268" r="5" fill="#22D3EE" />
+    <rect x="502.5" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="568.25" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#22D3EE" font-weight="700" text-anchor="middle" letter-spacing="0.8">LLM CALL</text>
+    <circle cx="711.75" cy="268" r="5" fill="#F59E0B" />
+    <rect x="646.0" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="711.75" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#F59E0B" font-weight="700" text-anchor="middle" letter-spacing="0.8">VALIDATE</text>
+    <circle cx="855.25" cy="268" r="5" fill="#8B5CF6" />
+    <rect x="789.5" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="855.25" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#8B5CF6" font-weight="700" text-anchor="middle" letter-spacing="0.8">SNAPSHOT</text>
+    <circle cx="998.75" cy="268" r="5" fill="#10B981" />
+    <rect x="933.0" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="998.75" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#10B981" font-weight="700" text-anchor="middle" letter-spacing="0.8">SUCCESS</text>
+    <circle cx="1142.25" cy="268" r="5" fill="#EF4444" />
+    <rect x="1076.5" y="292" width="131.5" height="56" rx="10" ry="10" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="1142.25" y="325" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#EF4444" font-weight="700" text-anchor="middle" letter-spacing="0.8">FAIL</text>
+  </g>
+
+  <g id="obs-cards" data-pptx-bounds="72.0 384.0 1181.1 176.0">
+    <rect x="72.0" y="384" width="358.6666666666667" height="176" rx="16" ry="16" fill="url(#glass)" stroke="#1E2C4A" stroke-width="1" />
+    <rect x="96.0" y="384.25" width="310.6666666666667" height="1.5" fill="url(#edgeTop)" />
+    <text x="100.0" y="418" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#8B5CF6" letter-spacing="1.8">SNAPSHOT</text>
+    <text x="100.0" y="456" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="24" fill="#F1F5F9" font-weight="900">快照留痕</text>
+    <line x1="100.0" y1="476" x2="134.0" y2="476" stroke="#8B5CF6" stroke-width="2" />
+    <text x="100.0" y="504" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#9FB0CC">每次执行的输入与输出双向落盘，既是回放素材，也<tspan x="100.0" dy="20.8">是快照回滚的恢复源。</tspan></text>
+    <rect x="460.6666666666667" y="384" width="358.6666666666667" height="176" rx="16" ry="16" fill="url(#glass)" stroke="#1E2C4A" stroke-width="1" />
+    <rect x="484.6666666666667" y="384.25" width="310.6666666666667" height="1.5" fill="url(#edgeTop)" />
+    <text x="488.6666666666667" y="418" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#F59E0B" letter-spacing="1.8">TOKEN / COST</text>
+    <text x="488.6666666666667" y="456" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="24" fill="#F1F5F9" font-weight="900">成本透明</text>
+    <line x1="488.6666666666667" y1="476" x2="522.6666666666667" y2="476" stroke="#F59E0B" stroke-width="2" />
+    <text x="488.6666666666667" y="504" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#9FB0CC">Token 按智能体归集、成本按模型归集，实时汇总到<tspan x="488.6666666666667" dy="20.8">统计接口。</tspan></text>
+    <rect x="849.3333333333334" y="384" width="358.6666666666667" height="176" rx="16" ry="16" fill="url(#glass)" stroke="#1E2C4A" stroke-width="1" />
+    <rect x="873.3333333333334" y="384.25" width="310.6666666666667" height="1.5" fill="url(#edgeTop)" />
+    <text x="877.3333333333334" y="418" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#22D3EE" letter-spacing="1.8">DASHBOARD</text>
+    <text x="877.3333333333334" y="456" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="24" fill="#F1F5F9" font-weight="900">运行看板</text>
+    <line x1="877.3333333333334" y1="476" x2="911.3333333333334" y2="476" stroke="#22D3EE" stroke-width="2" />
+    <text x="877.3333333333334" y="504" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#9FB0CC">总运行数、成功率、Token 分布与智能体表现对比，<tspan x="877.3333333333334" dy="20.8">一屏掌握全局。</tspan></text>
+  </g>
+
+  <g id="obs-note" data-pptx-bounds="72.0 591.1 737.8 16.8">
+    <text x="72" y="604" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#9FB0CC">可观测不是事后补的日志 —— 它是回滚决策的输入。没有 Trace 与 Snapshot，就没有自动恢复。</text>
+  </g>
+
+  <g id="page-footer" data-pptx-role="footer" data-pptx-bounds="72.0 664.0 1136.0 26.9">
+    <line x1="72" y1="664" x2="1208" y2="664" stroke="#1E2C4A" stroke-width="1" stroke-opacity="0.7" />
+    <text x="72" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" letter-spacing="2">HERMES  AGENTOS</text>
+    <text x="322" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" letter-spacing="1.4">全链路可观测</text>
+    <text x="1208" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#33507F" font-weight="700" text-anchor="end" letter-spacing="1.6">13 / 16</text>
+  </g>
+</svg>

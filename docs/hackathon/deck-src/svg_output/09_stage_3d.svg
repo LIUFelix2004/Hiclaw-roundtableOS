@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" data-pptx-page-role="content">
+  <defs>
+    <linearGradient id="glass" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22345C" stop-opacity="0.34" />
+      <stop offset="100%" stop-color="#0A1024" stop-opacity="0.10" />
+    </linearGradient>
+    <linearGradient id="glassSoft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B2C50" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#080F22" stop-opacity="0.10" />
+    </linearGradient>
+    <linearGradient id="glassHot" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4C6FFF" stop-opacity="0.20" />
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0.06" />
+    </linearGradient>
+    <linearGradient id="edgeTop" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6E8CFF" />
+      <stop offset="52%" stop-color="#A78BFA" />
+      <stop offset="100%" stop-color="#22D3EE" />
+    </linearGradient>
+    <radialGradient id="aurora" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3B5BFF" stop-opacity="0.40" />
+      <stop offset="55%" stop-color="#2A2F8F" stop-opacity="0.14" />
+      <stop offset="100%" stop-color="#050A18" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="auroraCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0E9BB0" stop-opacity="0.26" />
+      <stop offset="100%" stop-color="#050A18" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="tableTop" cx="50%" cy="38%" r="62%">
+      <stop offset="0%" stop-color="#2C4C9E" stop-opacity="0.62" />
+      <stop offset="60%" stop-color="#16264C" stop-opacity="0.50" />
+      <stop offset="100%" stop-color="#0A1024" stop-opacity="0.34" />
+    </radialGradient>
+    <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#4C6FFF" flood-opacity="0.55" />
+    </filter>
+    <filter id="glowViolet" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#8B5CF6" flood-opacity="0.55" />
+    </filter>
+    <filter id="glowCyan" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="#22D3EE" flood-opacity="0.50" />
+    </filter>
+    <filter id="softDrop" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.38" />
+    </filter>
+    <marker id="arrowHi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#33507F" />
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#4C6FFF" />
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#10B981" />
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#EF4444" />
+    </marker>
+    <marker id="arrowViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+            markerHeight="7" orient="auto">
+      <polygon points="0,1 10,5 0,9" fill="#8B5CF6" />
+    </marker>
+  </defs>
+
+  <g id="bg" data-pptx-bounds="0.0 0.0 1280.0 720.0">
+    <rect id="page-bg" width="1280" height="720" fill="#050A18" />
+    <ellipse cx="880" cy="400" rx="560" ry="460" fill="url(#aurora)" />
+    <ellipse cx="110" cy="130" rx="400" ry="300" fill="url(#auroraCyan)" />
+  </g>
+
+  <g id="header" data-pptx-bounds="72.0 67.0 588.1 99.0">
+    <text x="72" y="78" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="12" fill="#22D3EE" font-weight="700" letter-spacing="3">圆桌 06 / STAGE</text>
+    <text x="72" y="130" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="38" fill="#F1F5F9" font-weight="900">看得见的圆桌：3D 实时舞台</text>
+    <text x="72" y="162" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14" fill="#5E7093">讨论过程不是日志，而是一个可以现场旋转观看的三维场景</text>
+  </g>
+
+  <g id="stage-3d" data-pptx-bounds="500.2 250.5 751.7 360.8">
+    <ellipse cx="876" cy="424" rx="329.44" ry="173.536" fill="url(#aurora)" />
+    <ellipse cx="876" cy="424" rx="310.88" ry="136.8" fill="none" stroke="#4E7BFF" stroke-width="1" stroke-opacity="0.16" />
+    <ellipse cx="876" cy="424" rx="375.84000000000003" ry="165.4" fill="none" stroke="#4E7BFF" stroke-width="1" stroke-opacity="0.16" />
+    <ellipse cx="876" cy="434.208" rx="232" ry="102.08" fill="#08122A" fill-opacity="0.55" />
+    <ellipse cx="876" cy="424" rx="232" ry="102.08" fill="url(#tableTop)" stroke="#33507F" stroke-width="1.4" stroke-opacity="0.7" />
+    <ellipse cx="876" cy="424" rx="143.84" ry="63.2896" fill="none" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.30" />
+    <line x1="876.0" y1="291.3" x2="1109.1" y2="357.6" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="876.0" y1="291.3" x2="1109.1" y2="490.4" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="876.0" y1="291.3" x2="876.0" y2="556.7" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="876.0" y1="291.3" x2="642.9" y2="490.4" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="876.0" y1="291.3" x2="642.9" y2="357.6" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="1109.1" y1="357.6" x2="1109.1" y2="490.4" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="1109.1" y1="357.6" x2="876.0" y2="556.7" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="1109.1" y1="357.6" x2="642.9" y2="490.4" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="1109.1" y1="357.6" x2="642.9" y2="357.6" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="1109.1" y1="490.4" x2="876.0" y2="556.7" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="1109.1" y1="490.4" x2="642.9" y2="490.4" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="1109.1" y1="490.4" x2="642.9" y2="357.6" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="876.0" y1="556.7" x2="642.9" y2="490.4" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="876.0" y1="556.7" x2="642.9" y2="357.6" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <line x1="642.9" y1="490.4" x2="642.9" y2="357.6" stroke="#5E86FF" stroke-width="1" stroke-opacity="0.13" />
+    <text x="876" y="422" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="17" fill="#F1F5F9" font-weight="700" text-anchor="middle">ROUND 2</text>
+    <text x="876" y="444" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" text-anchor="middle" letter-spacing="2">DEBATING</text>
+    <circle cx="876.0" cy="291.3" r="17.0" fill="#0B1428" stroke="#8B5CF6" stroke-width="2" />
+    <circle cx="876.0" cy="291.3" r="7.1" fill="#8B5CF6" />
+    <text x="876.0" y="262.3" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#F1F5F9" font-weight="700" text-anchor="middle">主持人</text>
+    <text x="876.0" y="277.3" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#8B5CF6" text-anchor="middle" letter-spacing="1.2">MODERATOR</text>
+    <circle cx="1109.1" cy="357.6" r="39.4" fill="#6366F1" fill-opacity="0.14" />
+    <circle cx="1109.1" cy="357.6" r="28.6" fill="none" stroke="#6366F1" stroke-width="1.2" stroke-opacity="0.55" />
+    <circle cx="1109.1" cy="357.6" r="19.7" fill="#0B1428" stroke="#6366F1" stroke-width="2" />
+    <circle cx="1109.1" cy="357.6" r="8.3" fill="#6366F1" />
+    <text x="1109.1" y="325.9" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#F1F5F9" font-weight="700" text-anchor="middle">研究员</text>
+    <text x="1109.1" y="340.9" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#6366F1" text-anchor="middle" letter-spacing="1.2">RESEARCH</text>
+    <circle cx="1109.1" cy="490.4" r="17.0" fill="#0B1428" stroke="#F59E0B" stroke-width="2" />
+    <circle cx="1109.1" cy="490.4" r="7.1" fill="#F59E0B" />
+    <text x="1109.1" y="527.4" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#F1F5F9" font-weight="700" text-anchor="middle">分析师</text>
+    <text x="1109.1" y="542.4" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#F59E0B" text-anchor="middle" letter-spacing="1.2">ANALYST</text>
+    <circle cx="876.0" cy="556.7" r="17.0" fill="#0B1428" stroke="#10B981" stroke-width="2" />
+    <circle cx="876.0" cy="556.7" r="7.1" fill="#10B981" />
+    <text x="876.0" y="593.7" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#F1F5F9" font-weight="700" text-anchor="middle">撰稿员</text>
+    <text x="876.0" y="608.7" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#10B981" text-anchor="middle" letter-spacing="1.2">WRITER</text>
+    <circle cx="642.9" cy="490.4" r="17.0" fill="#0B1428" stroke="#3B82F6" stroke-width="2" />
+    <circle cx="642.9" cy="490.4" r="7.1" fill="#3B82F6" />
+    <text x="642.9" y="527.4" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#F1F5F9" font-weight="700" text-anchor="middle">数据员</text>
+    <text x="642.9" y="542.4" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#3B82F6" text-anchor="middle" letter-spacing="1.2">DATA</text>
+    <circle cx="642.9" cy="357.6" r="17.0" fill="#0B1428" stroke="#EF4444" stroke-width="2" />
+    <circle cx="642.9" cy="357.6" r="7.1" fill="#EF4444" />
+    <text x="642.9" y="328.6" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#F1F5F9" font-weight="700" text-anchor="middle">验证员</text>
+    <text x="642.9" y="343.6" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="9" fill="#EF4444" text-anchor="middle" letter-spacing="1.2">VALIDATOR</text>
+  </g>
+
+  <g id="speech-bubble" data-pptx-bounds="948.0 228.0 293.5 76.0">
+    <rect x="948" y="228" width="252" height="76" rx="12" ry="12" fill="#6366F1" fill-opacity="0.14" stroke="#6366F1" stroke-opacity="0.55" stroke-width="1" />
+    <text x="968" y="254" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="12" fill="#6366F1" letter-spacing="1.2">研究员 · challenge</text>
+    <text x="968" y="276" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#F1F5F9">增速口径与基数效应混淆了，建议按新增<tspan x="968" dy="18.0">装机重新界定。</tspan></text>
+  </g>
+
+  <g id="viz-features" data-pptx-bounds="72.0 232.0 523.2 376.0">
+    <rect x="72" y="232" width="470" height="376" rx="16" ry="16" fill="url(#glassSoft)" stroke="#1E2C4A" stroke-width="1" />
+    <text x="104" y="274" font-family="&quot;Arial Black&quot;, &quot;Microsoft YaHei&quot;, sans-serif" font-size="20" fill="#F1F5F9" font-weight="900">为什么值得做成 3D</text>
+    <text x="104" y="306" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="13" fill="#9FB0CC">多智能体最难被感知的是「同时性」—— 谁在等、谁在想、谁在反对。<tspan x="104" dy="22.1">平铺的聊天流表达不了这件事，一张桌子可以。</tspan></text>
+    <circle cx="110" cy="375" r="4" fill="#22D3EE" />
+    <text x="128" y="380" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#F1F5F9" font-weight="700">Three.js + CSS2D</text>
+    <text x="128" y="402" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">七个席位环绕圆桌，可自由旋转与缩放视角</text>
+    <circle cx="110" cy="431.0" r="4" fill="#22D3EE" />
+    <text x="128" y="436.0" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#F1F5F9" font-weight="700">思考态动画</text>
+    <text x="128" y="458.0" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">头部摆动与光环脉冲，实时反映谁正在推理</text>
+    <circle cx="110" cy="487.0" r="4" fill="#22D3EE" />
+    <text x="128" y="492.0" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#F1F5F9" font-weight="700">持久发言气泡</text>
+    <text x="128" y="514.0" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">每位智能体的观点摘要停留在座位上方</text>
+    <circle cx="110" cy="543.0" r="4" fill="#22D3EE" />
+    <text x="128" y="548.0" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="15" fill="#F1F5F9" font-weight="700">结论定格</text>
+    <text x="128" y="570.0" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif" font-size="12" fill="#5E7093">共识达成后场景统一切换为最终方案展示</text>
+  </g>
+
+  <g id="page-footer" data-pptx-role="footer" data-pptx-bounds="72.0 664.0 1136.0 26.9">
+    <line x1="72" y1="664" x2="1208" y2="664" stroke="#1E2C4A" stroke-width="1" stroke-opacity="0.7" />
+    <text x="72" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" letter-spacing="2">HERMES  AGENTOS</text>
+    <text x="322" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#5E7093" letter-spacing="1.4">3D 圆桌舞台</text>
+    <text x="1208" y="688" font-family="Consolas, &quot;Courier New&quot;, monospace" font-size="10.5" fill="#33507F" font-weight="700" text-anchor="end" letter-spacing="1.6">09 / 16</text>
+  </g>
+</svg>
