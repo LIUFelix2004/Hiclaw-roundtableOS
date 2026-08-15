@@ -14,19 +14,20 @@ const SocketContext = createContext<SocketApi | null>(null);
 
 export function SocketProvider({ children }: { children: ReactNode }) {
   const [socket] = useState(getSocket);
-  const [isConnected, setIsConnected] = useState(socket.connected);
+  // 初始固定为 false，SSR 与客户端首次渲染输出一致；真实连接状态仅在客户端挂载后更新，规避 hydration 不一致
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const handleConnect = () => setIsConnected(true);
     const handleDisconnect = () => setIsConnected(false);
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
+    if (socket.connected) setIsConnected(true);
     socket.connect();
     return () => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
       socket.disconnect();
-      setIsConnected(false);
     };
   }, [socket]);
 
