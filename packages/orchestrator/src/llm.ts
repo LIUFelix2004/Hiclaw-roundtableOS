@@ -46,6 +46,30 @@ export function isGatewayMockEnabled(): boolean {
   return process.env.MOCK_LLM === '1' || !gatewayApiKey();
 }
 
+/** 网关实际模式：'mock'（显式强制或 key 缺失降级）/ 'live'（真实网关调用） */
+export function gatewayMode(): 'mock' | 'live' {
+  if (process.env.MOCK_LLM === '1') return 'mock';
+  return gatewayApiKey() ? 'live' : 'mock';
+}
+
+/**
+ * 进程启动时调用一次：把「key 缺失导致的静默 mock」变成显式告警。
+ * MOCK_LLM=1 是合法用法，但也提示当前不会发生真实模型调用，避免演示误判。
+ */
+export function warnGatewayMockIfNeeded(): void {
+  if (process.env.MOCK_LLM === '1') {
+    console.warn(
+      '[orchestrator:llm] MOCK_LLM=1 已显式启用，orchestrator 运行在离线兜底模式，不会发生真实模型调用',
+    );
+    return;
+  }
+  if (!gatewayApiKey()) {
+    console.warn(
+      '[orchestrator:llm] HICLAW_GATEWAY_KEY 未配置，orchestrator 运行在离线兜底模式，不会发生真实模型调用',
+    );
+  }
+}
+
 export function estimateTokens(text: string): number {
   if (!text) return 0;
   const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/g) ?? []).length;
@@ -79,6 +103,13 @@ export async function gatewayChat(options: GatewayChatOptions): Promise<GatewayC
 
   if (!response.ok) {
     const detail = await response.text().catch(() => '');
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        `AI 网关鉴权失败（${response.status}）：网关 key 无效或未在 Higress 注册为 consumer。` +
+          `请核对 HICLAW_GATEWAY_KEY 是否与 agentteams-manager.env 中的 AGENTTEAMS_MANAGER_GATEWAY_KEY 一致。` +
+          `详情: ${detail.slice(0, 300)}`,
+      );
+    }
     throw new Error(`AI 网关调用失败（${response.status}）: ${detail.slice(0, 500)}`);
   }
 
