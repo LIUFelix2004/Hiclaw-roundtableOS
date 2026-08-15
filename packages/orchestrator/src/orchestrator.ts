@@ -3,6 +3,8 @@ import type { AgentRole, RoundtableConfig, RoundtableConsensus } from '@hermes/s
 import { matrixTypeToSharedEvent, sharedToMatrixType, type S2CEventName, type SharedEmit } from './event-mapping';
 import type { WorkerDispatcher } from './scheduler';
 import { RoundtableRunner } from './roundtable';
+import { gatewayMode, warnGatewayMockIfNeeded } from './llm';
+import { parseWorkerResult } from './task-protocol';
 
 export interface OrchestratorOptions {
   /** Matrix 客户端（已登录） */
@@ -49,7 +51,7 @@ export class Orchestrator implements WorkerDispatcher {
   private readonly emit: SharedEmit;
   private readonly log: (message: string) => void;
   private abort: AbortController | null = null;
-  private pending = new Map<number, PendingDispatch>();
+  private pending = new Map<string, PendingDispatch>();
   private seq = 0;
 
   constructor(opts: OrchestratorOptions) {
@@ -76,6 +78,8 @@ export class Orchestrator implements WorkerDispatcher {
   /** 启动：长轮询 Matrix 房间，把 hermes.* 自定义事件解码后向上桥接 */
   start(): void {
     if (this.abort) return;
+    this.log(`[orchestrator] gateway mode: ${gatewayMode()}`);
+    warnGatewayMockIfNeeded();
     this.abort = new AbortController();
     const handlers: SyncHandlers = {
       onRoomMessage: (msg) => this.handleWorkerReply(msg),
@@ -149,14 +153,13 @@ export class Orchestrator implements WorkerDispatcher {
     const timeoutMs = opts?.timeoutMs ?? 120_000;
     const emitOutput = opts?.emitOutput ?? true;
     const taskId = opts?.taskId ?? `task-${++this.seq}`;
-    const id = ++this.seq;
     const startedAt = Date.now();
     return new Promise<string>((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pending.delete(id);
+        this.pending.delete(taskId);
         reject(new Error(`等待 Worker(${role}) 回复超时（${timeoutMs}ms）`));
       }, timeoutMs);
-      this.pending.set(id, {
+      this.pending.set(taskId, {
         workerUserId,
         role,
         taskId,
@@ -181,14 +184,34 @@ export class Orchestrator implements WorkerDispatcher {
     });
   }
 
-  /** Worker 文本回复处理：按 sender 匹配最早的未决直派请求并 resolve / emit */
+  /**
+   * Worker 文本回复处理：优先按 taskId 精确匹配（避免并发任务内容串位），
+   * 回退到按 sender 取最早（老 Worker / 不守契约的模型，此时打 warn）。
+   */
   private handleWorkerReply(msg: MatrixRoomMessage): void {
     if (msg.roomId !== this.roomId) return;
 
-    for (const [id, pd] of this.pending) {
+    // 优先：解析回复正文里的 taskId，精确匹配 pending
+    const parsed = parseWorkerResult(msg.body);
+    if (parsed.taskId) {
+      const pd = this.pending.get(parsed.taskId);
+      if (pd && pd.workerUserId === msg.sender) {
+        clearTimeout(pd.timer);
+        this.pending.delete(parsed.taskId);
+        pd.resolve(msg.body);
+        return;
+      }
+      // taskId 匹配不到（已超时删除 / 非本 Worker），落到下方回退或主动汇报
+    }
+
+    // 回退：按 sender 取最早，打 warn 说明发生了模糊匹配
+    for (const [taskId, pd] of this.pending) {
       if (pd.workerUserId !== msg.sender) continue;
+      console.warn(
+        `[orchestrator] Worker 回复未携带可匹配的 taskId，按 sender 模糊匹配（taskId=${taskId}）`,
+      );
       clearTimeout(pd.timer);
-      this.pending.delete(id);
+      this.pending.delete(taskId);
       pd.resolve(msg.body);
       return;
     }

@@ -25,6 +25,8 @@ export interface WorkerUsage {
 export interface WorkerStructuredResult {
   content: string;
   usage: WorkerUsage;
+  /** Worker 回传的任务 ID（用于回复精确匹配，缺失时保持 undefined） */
+  taskId?: string;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -73,10 +75,11 @@ export function buildTaskBody(input: TaskProtocolInput): string {
   lines.push('<输出契约>');
   lines.push('你必须只输出一个 JSON 对象（不要包裹 Markdown 代码块、不要输出任何额外文字），结构如下：');
   lines.push('{');
+  lines.push('  "taskId": "原样回传收到的 taskId（见正文开头）",');
   lines.push('  "content": "你的最终产出（字符串，可为结构化 JSON 的字符串表示）",');
   lines.push('  "usage": { "model": "模型名", "inputTokens": 数字, "outputTokens": 数字 }');
   lines.push('}');
-  lines.push('其中 usage 为可选字段，无法统计时可省略；content 为必填。');
+  lines.push('其中 usage 为可选字段，无法统计时可省略；taskId 与 content 为必填。');
   lines.push('</输出契约>');
 
   return lines.join('\n');
@@ -120,6 +123,7 @@ export function parseWorkerResult(raw: string): WorkerStructuredResult {
         inputTokens: typeof u.inputTokens === 'number' ? u.inputTokens : undefined,
         outputTokens: typeof u.outputTokens === 'number' ? u.outputTokens : undefined,
       },
+      taskId: typeof json.taskId === 'string' ? json.taskId : undefined,
     };
   }
   return { content: raw, usage: {} };
