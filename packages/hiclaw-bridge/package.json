@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hermes/matrix-client": "workspace:*",
+    "@hermes/orchestrator": "workspace:*",
     "@hermes/shared": "workspace:*",
     "@koa/cors": "^5.0.0",
     "koa": "^2.15.0",
