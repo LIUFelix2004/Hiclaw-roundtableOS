@@ -14,6 +14,8 @@ export interface TaskProtocolInput {
   title: string;
   userMessage: string;
   upstreamOutputs: Array<{ agent: AgentRole; title: string; output: string }>;
+  /** T5：可选模型偏好（Rollback model_switch 时注入，Worker 端可识别则遵守） */
+  modelHint?: string;
 }
 
 export interface WorkerUsage {
@@ -51,6 +53,9 @@ export function buildTaskBody(input: TaskProtocolInput): string {
   lines.push(`taskId: ${input.taskId}`);
   lines.push(`role: ${input.role}`);
   lines.push(`title: ${input.title}`);
+  if (input.modelHint) {
+    lines.push(`model: ${input.modelHint}`);
+  }
   lines.push('');
 
   lines.push('<用户请求>');

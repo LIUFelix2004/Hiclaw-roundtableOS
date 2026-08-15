@@ -1,6 +1,9 @@
 import type { SubTask, AgentRole } from '@hermes/shared';
 import { buildTaskBody, parseWorkerResult } from './task-protocol';
 import type { SharedEmit } from './event-mapping';
+import { validateOutput } from './validator';
+import { recoverTask } from './rollback';
+import { experienceMemory } from './experience-memory';
 
 /**
  * TaskScheduler（T3.2）：从 legacy packages/server/src/scheduler.ts 迁入。
@@ -107,8 +110,9 @@ export class TaskScheduler {
       model: fallbackModel,
     });
 
-    try {
-      const upstreamOutputs = task.dependsOn.map((depId) => {
+    // 上游输出（buildBody 与质检共用）
+    const upstreamOutputsOf = () =>
+      task.dependsOn.map((depId) => {
         const depTask = tasks.find((t) => t.id === depId);
         return {
           agent: depTask?.agent ?? task.agent,
@@ -117,16 +121,27 @@ export class TaskScheduler {
         };
       });
 
-      const body = buildTaskBody({
+    // 任务正文（T5：modelHint 供 Rollback model_switch 注入模型偏好）
+    const buildBody = (modelHint?: string): string =>
+      buildTaskBody({
         taskId: task.id,
         role: task.agent,
         title: task.title,
         userMessage,
-        upstreamOutputs,
+        upstreamOutputs: upstreamOutputsOf(),
+        modelHint,
       });
 
+    // Rollback 重跑闭包：用指定模型（或默认）重新派发并解析
+    const rerun = async (modelHint?: string) => {
+      const raw = await this.dispatcher.dispatch(task.agent, task.id, buildBody(modelHint));
+      const parsed = parseWorkerResult(raw);
+      return { output: parsed.content, model: parsed.usage.model ?? modelHint ?? fallbackModel };
+    };
+
+    try {
       const startedAt = Date.now();
-      const raw = await this.dispatcher.dispatch(task.agent, task.id, body);
+      const raw = await this.dispatcher.dispatch(task.agent, task.id, buildBody());
       const parsed = parseWorkerResult(raw);
       const duration = Date.now() - startedAt;
 
@@ -153,6 +168,74 @@ export class TaskScheduler {
         outputTokens,
       });
 
+      // T5：输出质检（Validator 用本地网关 LLM）
+      const verdict = await validateOutput({
+        taskId: task.id,
+        role: task.agent,
+        title: task.title,
+        userMessage,
+        output: parsed.content,
+        upstreamOutputs: upstreamOutputsOf(),
+        emit: this.emit,
+        log: this.log,
+      });
+
+      if (verdict.pass) {
+        await experienceMemory.record({
+          taskType: task.title,
+          agent: task.agent,
+          model,
+          success: true,
+        });
+        return {
+          taskId: task.id,
+          role: task.agent,
+          output: parsed.content,
+          model,
+          inputTokens,
+          outputTokens,
+          duration,
+        };
+      }
+
+      // 质检不过 → Rollback 恢复链
+      const outcome = await recoverTask({
+        taskId: task.id,
+        taskTitle: task.title,
+        role: task.agent,
+        errorType: verdict.failCodes?.[0] ?? 'POLICY_ERROR',
+        fromModel: model,
+        failureMessage: verdict.issues?.join('; '),
+        rerun,
+        emit: this.emit,
+        log: this.log,
+      });
+
+      if (outcome.recovered && outcome.output !== undefined) {
+        await experienceMemory.record({
+          taskType: task.title,
+          agent: task.agent,
+          model: outcome.model ?? model,
+          success: true,
+        });
+        return {
+          taskId: task.id,
+          role: task.agent,
+          output: outcome.output,
+          model: outcome.model ?? model,
+          inputTokens,
+          outputTokens,
+          duration,
+        };
+      }
+
+      await experienceMemory.record({
+        taskType: task.title,
+        agent: task.agent,
+        model,
+        success: false,
+        failReason: `质检未通过: ${verdict.issues?.join('; ') ?? 'unknown'}`,
+      });
       return {
         taskId: task.id,
         role: task.agent,
@@ -176,6 +259,37 @@ export class TaskScheduler {
         agent: task.agent,
         errorType: 'MODEL_ERROR',
         message,
+      });
+
+      // T5：执行失败 → Rollback 恢复链
+      const outcome = await recoverTask({
+        taskId: task.id,
+        taskTitle: task.title,
+        role: task.agent,
+        errorType: 'MODEL_ERROR',
+        fromModel: fallbackModel,
+        failureMessage: message,
+        rerun,
+        emit: this.emit,
+        log: this.log,
+      });
+
+      if (outcome.recovered && outcome.output !== undefined) {
+        return {
+          taskId: task.id,
+          role: task.agent,
+          output: outcome.output,
+          model: outcome.model ?? fallbackModel,
+          duration: 0,
+        };
+      }
+
+      await experienceMemory.record({
+        taskType: task.title,
+        agent: task.agent,
+        model: fallbackModel,
+        success: false,
+        failReason: message,
       });
       return {
         taskId: task.id,
