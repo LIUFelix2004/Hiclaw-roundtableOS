@@ -78,3 +78,12 @@ export function toSnapshotView(snapshot: AgentSnapshot): SnapshotView {
     data: snapshot.data ?? { input: snapshot.input, output: snapshot.output },
   };
 }
+
+/**
+ * hiclaw 桥的私有事件。它们不在 @hermes/shared 的 ServerToClientEvents 里
+ * （迁移期契约冻结，legacy 与 bridge 共用），ChatView 通过 socket 实例直接订阅。
+ */
+export interface BridgeServerToClientEvents {
+  'bridge:echo': (data: { message: string; ts: number }) => void;
+  'bridge:heartbeat': (data?: unknown) => void;
+}

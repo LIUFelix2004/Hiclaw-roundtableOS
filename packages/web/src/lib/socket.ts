@@ -14,6 +14,9 @@ const SERVER_URL =
     ? process.env.NEXT_PUBLIC_BRIDGE_URL
     : process.env.NEXT_PUBLIC_SERVER_URL) || DEFAULT_URL[BACKEND];
 
+export const BACKEND_MODE = BACKEND;
+export const BACKEND_URL = SERVER_URL;
+
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 
 export function getSocket(): Socket<ServerToClientEvents, ClientToServerEvents> {

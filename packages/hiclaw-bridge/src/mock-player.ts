@@ -269,7 +269,7 @@ export async function playTask(message: string, emit: EmitFn): Promise<void> {
     }
 
     if (ready.length === 0) {
-      emit('error', {
+      emit('task:error', {
         message: `Scheduler: deadlock detected at round ${round}. Remaining: ${remaining.size} tasks.`,
       });
       break;
