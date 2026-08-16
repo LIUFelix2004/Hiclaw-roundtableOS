@@ -13,6 +13,7 @@ import {
   type SharedEmit,
 } from '@hermes/orchestrator';
 import { playRoundtable, playTask } from './mock-player';
+import { bridgeStats } from './stats';
 
 // bridge 在 shared 契约（迁移期冻结）之上，仅扩展验收用的 echo/heartbeat 事件；
 // 业务事件仍 1:1 复刻 @hermes/shared，通过类型 import 强制签名一致。
@@ -43,44 +44,87 @@ interface MatrixConfig {
   workerUserId?: string;
 }
 
+/**
+ * 读环境变量，接受多个别名。
+ *
+ * hiclaw 侧下发的凭据用的是 HICLAW_ROOM_ID / HICLAW_ADMIN_PASSWORD 这类命名，
+ * 与本包早先约定的 HICLAW_MATRIX_* 不一致。这里两种都认，避免因为改名漏配而
+ * 静默退回 mock —— 那种失败最难排查。
+ */
+function env(...names: string[]): string | undefined {
+  for (const n of names) {
+    const v = process.env[n];
+    if (v && v.trim()) return v.trim();
+  }
+  return undefined;
+}
+
 function readMatrixConfig(): MatrixConfig | null {
-  const baseUrl = process.env.HICLAW_MATRIX_BASE_URL;
-  const roomId = process.env.HICLAW_MATRIX_ROOM_ID;
+  const baseUrl = env('HICLAW_MATRIX_BASE_URL');
+  const roomId = env('HICLAW_MATRIX_ROOM_ID', 'HICLAW_ROOM_ID');
   if (!baseUrl || !roomId) return null;
 
   const hasCredentials =
-    !!process.env.HICLAW_MATRIX_TOKEN ||
-    (!!process.env.HICLAW_MATRIX_USER && !!process.env.HICLAW_MATRIX_PASSWORD);
+    !!env('HICLAW_MATRIX_TOKEN') ||
+    (!!env('HICLAW_MATRIX_USER', 'HICLAW_USER') &&
+      !!env('HICLAW_MATRIX_PASSWORD', 'HICLAW_ADMIN_PASSWORD'));
   if (!hasCredentials) return null;
 
   let workers: Partial<Record<AgentRole, string>> | undefined;
-  const rawWorkers = process.env.HICLAW_WORKERS;
+  const rawWorkers = env('HICLAW_WORKERS');
   if (rawWorkers) {
     try {
       workers = JSON.parse(rawWorkers) as Partial<Record<AgentRole, string>>;
-    } catch {
-      console.warn('[bridge] HICLAW_WORKERS 不是合法 JSON，已忽略');
+    } catch (err) {
+      console.warn(`[bridge] HICLAW_WORKERS 不是合法 JSON，已忽略：${(err as Error).message}`);
     }
   }
 
-  const workerUserId = process.env.HICLAW_WORKER_USER_ID;
+  const workerUserId = env('HICLAW_WORKER_USER_ID');
   // Orchestrator 至少需要 workers 映射或单 Worker 直派其一，否则构造即抛错。
   if (!workers && !workerUserId) return null;
 
   return {
     baseUrl,
     roomId,
-    token: process.env.HICLAW_MATRIX_TOKEN,
-    userId: process.env.HICLAW_MATRIX_USER_ID,
-    user: process.env.HICLAW_MATRIX_USER,
-    password: process.env.HICLAW_MATRIX_PASSWORD,
+    token: env('HICLAW_MATRIX_TOKEN'),
+    userId: env('HICLAW_MATRIX_USER_ID'),
+    user: env('HICLAW_MATRIX_USER', 'HICLAW_USER'),
+    password: env('HICLAW_MATRIX_PASSWORD', 'HICLAW_ADMIN_PASSWORD'),
     workers,
     workerUserId,
   };
 }
 
 const matrixConfig = readMatrixConfig();
-const MODE: Mode = process.env.MOCK_LLM === '1' || !matrixConfig ? 'mock' : 'live';
+const FORCE_MOCK = process.env.MOCK_LLM === '1';
+const WANT_LIVE = env('HICLAW_LIVE') === '1';
+const MODE: Mode = !FORCE_MOCK && matrixConfig ? 'live' : 'mock';
+
+// 明确要求 live 却落回了 mock，一定要说清楚缺什么，否则很难排查。
+if (WANT_LIVE && MODE === 'mock') {
+  const missing: string[] = [];
+  if (FORCE_MOCK) missing.push('MOCK_LLM=1 强制离线（去掉它）');
+  if (!matrixConfig) {
+    if (!env('HICLAW_MATRIX_BASE_URL')) missing.push('HICLAW_MATRIX_BASE_URL');
+    if (!env('HICLAW_MATRIX_ROOM_ID', 'HICLAW_ROOM_ID')) missing.push('HICLAW_ROOM_ID');
+    if (
+      !env('HICLAW_MATRIX_TOKEN') &&
+      !(env('HICLAW_MATRIX_USER', 'HICLAW_USER') && env('HICLAW_MATRIX_PASSWORD', 'HICLAW_ADMIN_PASSWORD'))
+    ) {
+      missing.push('HICLAW_MATRIX_TOKEN 或 HICLAW_MATRIX_USER + HICLAW_ADMIN_PASSWORD');
+    }
+    if (!env('HICLAW_WORKERS') && !env('HICLAW_WORKER_USER_ID')) {
+      missing.push('HICLAW_WORKERS 或 HICLAW_WORKER_USER_ID');
+    }
+  }
+  console.warn(
+    `[bridge] 已设 HICLAW_LIVE=1 但仍以 mock 启动，缺少：${missing.join('、') || '未知'}`,
+  );
+}
+if (!env('HICLAW_GATEWAY_KEY')) {
+  console.warn('[bridge] 未配置 HICLAW_GATEWAY_KEY，Planner 与 Agent 的模型调用会走离线兜底');
+}
 
 /**
  * 把 socket 包装成编排层要的 SharedEmit。
@@ -91,7 +135,16 @@ const MODE: Mode = process.env.MOCK_LLM === '1' || !matrixConfig ? 'mock' : 'liv
  */
 function makeEmit(socket: BridgeSocket): SharedEmit {
   const raw = socket as unknown as { emit: (event: string, payload: unknown) => void };
-  return (event, payload) => raw.emit(event, payload);
+  return (event, payload) => {
+    // 顺路采集统计，数据只来自真实转发过的事件。
+    if (event === 'agent:output') {
+      const p = payload as { agent?: string; tokens?: number; cost?: number; model?: string };
+      if (p?.agent) bridgeStats.recordOutput(p.agent, p.tokens, p.cost, p.model);
+    } else if (event === 'roundtable:consensus') {
+      bridgeStats.recordConsensus(payload);
+    }
+    raw.emit(event, payload);
+  };
 }
 
 /** 构建一套 live 编排组件；Matrix 登录失败时抛错，由调用方降级处理。 */
@@ -145,14 +198,33 @@ const app = new Koa();
 app.use(cors());
 
 app.use(async (ctx) => {
-  if (ctx.method === 'GET' && ctx.path === '/health') {
-    ctx.body = {
-      status: 'ok',
-      service: 'hermes-hiclaw-bridge',
-      mode: MODE,
-      uptime: process.uptime(),
-    };
-    return;
+  if (ctx.method !== 'GET') return;
+
+  // studio 仪表盘经 BFF /api/competition/stats 聚合读取 tokens 与 health；
+  // 这几个路由缺失时 BFF 会兜底返回 502，仪表盘全空。
+  switch (ctx.path) {
+    case '/health':
+      ctx.body = {
+        status: 'ok',
+        service: 'hermes-hiclaw-bridge',
+        mode: MODE,
+        uptime: process.uptime(),
+      };
+      return;
+    case '/api/stats/tokens':
+      ctx.body = bridgeStats.getTokens();
+      return;
+    case '/api/stats/cost':
+      ctx.body = bridgeStats.getCost();
+      return;
+    case '/api/stats/health':
+      ctx.body = bridgeStats.getHealth(MODE);
+      return;
+    case '/api/stats/roundtable':
+      ctx.body = bridgeStats.getRoundtable();
+      return;
+    default:
+      return;
   }
 });
 
@@ -190,6 +262,7 @@ io.on('connection', (socket: BridgeSocket) => {
   socket.on('task:create', async (data) => {
     const message = data?.message ?? '';
     console.log(`[bridge:task:create] "${message}" from ${socket.id}`);
+    bridgeStats.activeTasks += 1;
     try {
       const live = await runners();
       if (live) {
@@ -197,16 +270,21 @@ io.on('connection', (socket: BridgeSocket) => {
       } else {
         await playTask(message, emit as never);
       }
+      bridgeStats.recordRun();
     } catch (err) {
       const msg = (err as Error).message || 'task failed';
       console.error(`[bridge:task:create] failed: ${msg}`);
+      bridgeStats.recordFailure(msg);
       socket.emit('task:error', { message: msg });
+    } finally {
+      bridgeStats.activeTasks = Math.max(0, bridgeStats.activeTasks - 1);
     }
   });
 
   socket.on('roundtable:start', async (data) => {
     const config = data as RoundtableConfig;
     console.log(`[bridge:roundtable:start] topic: ${config?.topic} from ${socket.id}`);
+    bridgeStats.activeRoundtables += 1;
     try {
       const live = await runners();
       if (live) {
@@ -214,11 +292,16 @@ io.on('connection', (socket: BridgeSocket) => {
       } else {
         await playRoundtable(config, emit as never);
       }
+      bridgeStats.recordRoundtable(config?.topic ?? '', config?.maxRounds ?? 3);
+      bridgeStats.recordRun();
     } catch (err) {
       const msg = (err as Error).message || 'roundtable failed';
       console.error(`[bridge:roundtable:start] failed: ${msg}`);
+      bridgeStats.recordFailure(msg);
       // 前端（web 与 studio 圆桌 store）靠这个事件复位运行态，失败路径必须发。
       socket.emit('roundtable:error', { message: msg });
+    } finally {
+      bridgeStats.activeRoundtables = Math.max(0, bridgeStats.activeRoundtables - 1);
     }
   });
 
