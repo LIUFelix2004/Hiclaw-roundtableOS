@@ -10,6 +10,12 @@ importers:
 
   packages/hiclaw-bridge:
     dependencies:
+      '@hermes/matrix-client':
+        specifier: workspace:*
+        version: link:../matrix-client
+      '@hermes/orchestrator':
+        specifier: workspace:*
+        version: link:../orchestrator
       '@hermes/shared':
         specifier: workspace:*
         version: link:../shared

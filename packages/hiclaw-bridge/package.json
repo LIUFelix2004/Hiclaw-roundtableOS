@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@hermes/shared": "workspace:*",
+    "@hermes/matrix-client": "workspace:*",
+    "@hermes/orchestrator": "workspace:*",
     "@koa/cors": "^5.0.0",
     "koa": "^2.15.0",
     "socket.io": "^4.7.0"
