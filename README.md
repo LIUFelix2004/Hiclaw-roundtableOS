@@ -1,7 +1,9 @@
 # Hiclaw-roundtableOS
 
 
-面向生产级多 Agent 协同的智能体操作系统。系统把自然语言任务拆解为 DAG，由多个 Skill Agent 协作执行，并通过 Validator、Rollback、Experience Memory 形成治理闭环。
+面向生产级多 Agent 协同的智能体操作系统。系统把自然语言任务拆解为 DAG，由多个 Skill Agent 协作执行，并通过 Validator、Rollback、Experience Memory 形成治理闭环
+<img width="1920" height="879" alt="image" src="https://github.com/user-attachments/assets/1118b5d8-fd70-413e-ba99-957122d7c3e0" />
+
 
 ## 核心能力
 
