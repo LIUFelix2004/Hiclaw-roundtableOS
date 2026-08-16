@@ -21,8 +21,11 @@ export function getSocket(): Socket<ServerToClientEvents, ClientToServerEvents> 
     socket = io(SERVER_URL, {
       autoConnect: true,
       reconnection: true,
-      reconnectionAttempts: 5,
+      // 无限重连：后端短暂不可用（如重启 bridge/dev server）后旧标签页的
+      // socket 不能永久死亡，否则 emit 被静默缓冲、前端空等（"卡死"类问题）。
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
     });
   }
   return socket;

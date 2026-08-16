@@ -9,7 +9,7 @@ import { SpeechCard } from './SpeechCard';
 import { ConsensusCard } from './ConsensusCard';
 
 export function RoundtableView() {
-  const { speeches, consensus, isRunning, start } = useRoundtable();
+  const { speeches, consensus, isRunning, error, start } = useRoundtable();
   const { on, off } = useSocket();
   const [validator, setValidator] = useState<ValidatorResult | null>(null);
   useEffect(() => { const result = (event: ValidatorResult) => setValidator(event); on('validator:result', result); return () => off('validator:result', result); }, [on, off]);
@@ -22,6 +22,12 @@ export function RoundtableView() {
           <h1 className="mt-1 text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>AI Roundtable</h1>
           <p className="mt-1 text-[13px]" style={{ color: 'var(--text-secondary)' }}>Bring multiple agent perspectives together, then validate the final answer.</p>
         </header>
+
+        {error && (
+          <div role="alert" className="rounded-lg border p-3 text-sm" style={{ borderColor: 'var(--error)', background: 'var(--bg-card)', color: 'var(--error)' }}>
+            圆桌执行失败：{error}
+          </div>
+        )}
 
         {(!speeches.length && !consensus) || isRunning ? <TopicInput isRunning={isRunning} onStart={(config) => { setValidator(null); start(config); }} /> : null}
 

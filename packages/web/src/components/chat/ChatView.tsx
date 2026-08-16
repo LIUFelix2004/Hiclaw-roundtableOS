@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, Bot, LoaderCircle } from 'lucide-react';
 import type { AgentOutput, AgentStatus, RollbackCompleteEvent, RollbackEvent, RollbackResult, SubTask } from '@hermes/shared';
 import { useSocket } from '@/hooks/useSocket';
+import { useShell } from '@/components/shell/Shell';
 import { toRollbackCompleteView, type RollbackCompleteView } from '@/lib/events';
 import { MessageBubble } from './MessageBubble';
 import { AgentStatusBar } from './AgentStatusBar';
@@ -13,6 +14,7 @@ type ChatMessage = { id: string; type: 'user' | 'plan' | 'stream' | 'output' | '
 
 export function ChatView() {
   const { emit, on, off } = useSocket();
+  const { currentView } = useShell();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [statuses, setStatuses] = useState<AgentStatus[]>([]);
   const [input, setInput] = useState('');
@@ -22,7 +24,9 @@ export function ChatView() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const activeStreams = useMemo(() => new Set(messages.filter((m) => m.type === 'stream' && m.streaming).map((m) => m.taskId)), [messages]);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  // 只有本视图可见时才滚动：视图常驻挂载（AnimatedView 只切透明度），不可见时
+  // scrollIntoView 会滚动共享滚动容器，把正在显示的其它视图顶出可视区（"圆桌空白"根因）。
+  useEffect(() => { if (currentView === 'chat') bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, currentView]);
   useEffect(() => {
     const plan = ({ tasks }: { tasks: SubTask[] }) => setMessages((current) => [...current, { id: `plan-${Date.now()}`, type: 'plan', tasks }]);
     const status = (event: AgentStatus) => setStatuses((current) => [...current.filter((item) => item.taskId !== event.taskId), event]);

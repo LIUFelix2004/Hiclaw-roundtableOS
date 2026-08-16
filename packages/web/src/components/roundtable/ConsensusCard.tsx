@@ -7,6 +7,11 @@ import type { RoundtableConsensus, ValidatorResult } from '@hermes/shared';
 
 export function ConsensusCard({ consensus, validator }: { consensus: RoundtableConsensus; validator?: ValidatorResult | null }) {
   const scores = validator?.scores;
+  // 防御性默认值：live 链路 / 桥接事件的载荷若字段缺失，降级为空数组而不是渲染崩溃
+  const agreements = consensus.agreements ?? [];
+  const risks = consensus.risks ?? consensus.disagreements ?? [];
+  const tasks = consensus.tasks ?? consensus.executionTasks ?? [];
+  const finalAnswer = consensus.finalAnswer ?? consensus.finalSolution ?? '';
   return (
     <div className="space-y-5 rounded-lg border p-5" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-card)', borderRadius: 'var(--radius-md)' }}>
       <div className="flex items-center gap-2">
@@ -16,10 +21,10 @@ export function ConsensusCard({ consensus, validator }: { consensus: RoundtableC
       </div>
 
       <div className="prose prose-sm max-w-none dark:prose-invert">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{consensus.finalAnswer}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{finalAnswer}</ReactMarkdown>
       </div>
 
-      {(consensus.tasks ?? consensus.executionTasks)?.length ? (
+      {tasks.length ? (
         <div className="overflow-x-auto">
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Execution tasks</h3>
           <table className="w-full min-w-[42rem] text-left text-xs">
@@ -27,7 +32,7 @@ export function ConsensusCard({ consensus, validator }: { consensus: RoundtableC
               <tr><th className="pb-2 pr-3">Agent</th><th className="pb-2 pr-3">Target</th><th className="pb-2 pr-3">Input</th><th className="pb-2">Expected output</th></tr>
             </thead>
             <tbody>
-              {(consensus.tasks ?? consensus.executionTasks)!.map((task, index) => (
+              {tasks.map((task, index) => (
                 <tr key={`${task.agent}-${index}`} className="border-t" style={{ borderColor: 'var(--border-light)' }}>
                   <td className="py-2 pr-3 font-medium capitalize">{task.agent}</td>
                   <td className="py-2 pr-3">{task.target ?? task.objective}</td>
@@ -44,7 +49,7 @@ export function ConsensusCard({ consensus, validator }: { consensus: RoundtableC
         <div>
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Agreements</h3>
           <ul className="space-y-1 text-sm">
-            {consensus.agreements.map((item) => (
+            {agreements.map((item) => (
               <li key={item} className="flex gap-2">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" style={{ color: 'var(--success)' }} />{item}
               </li>
@@ -54,7 +59,7 @@ export function ConsensusCard({ consensus, validator }: { consensus: RoundtableC
         <div>
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Disagreements / risks</h3>
           <ul className="space-y-1 text-sm">
-            {(consensus.risks ?? consensus.disagreements).map((item) => (
+            {risks.map((item) => (
               <li key={item} className="flex gap-2">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" style={{ color: 'var(--warning)' }} />{item}
               </li>
