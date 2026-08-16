@@ -4,8 +4,9 @@
   "private": true,
   "description": "Hermes AgentOS - Production-grade Multi-Agent Infrastructure",
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
-    "dev:web": "pnpm --filter @hermes/web dev",
+    "dev": "pnpm dev:studio",
+    "dev:studio": "cd packages/hermes-studio && npm run dev",
+    "dev:bridge": "pnpm --filter @hermes/hiclaw-bridge dev",
     "dev:server": "pnpm --filter @hermes/server dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint"

@@ -17,7 +17,7 @@
 
 | 层 | 技术 |
 |---|---|
-| 前端 | Next.js 16 + React + Socket.IO Client |
+| 前端 | hermes-studio（Vue 3 + Vite + Naive UI），含 3D 像素圆桌 |
 | 后端 | Koa 2 + Socket.IO + tsx |
 | 共享契约 | pnpm workspace 内 `@hermes/shared` 类型/事件协议包 |
 | LLM 接入 | OpenAI / Anthropic / DeepSeek 多 Provider 路由（`LLM_PROVIDER` 或模型前缀），流式 usage 真实 Token 计数，支持按 Agent 配置模型 |
@@ -28,7 +28,10 @@
 ```text
 hermes-agentos/
 ├── packages/
-│   ├── web/       # Next.js 前端
+│   ├── hermes-studio/  # 唯一前端（Vue 3），3D 圆桌 / DAG / 对话
+│   ├── hiclaw-bridge/  # hiclaw 接入桥（8650），live/mock 双模式
+│   ├── orchestrator/   # hiclaw 编排：planner / scheduler / roundtable
+│   ├── matrix-client/  # Matrix 协议客户端
 │   ├── server/    # Koa + Socket.IO 后端
 │   │   └── src/
 │   │       ├── agents/          # Skill 模块（6 文件/模块）
@@ -58,11 +61,15 @@ pnpm dev:server
 
 未配置任何模型 Key（OpenAI / Anthropic / DeepSeek）时会自动进入 Mock 模式，服务启动于 `http://localhost:8648`。
 
-前端：
+前端（仓库只有这一个前端，`pnpm dev` 即启动它）：
 
 ```powershell
-pnpm dev:web
+pnpm dev:studio
 ```
+
+前端在 8649，studio 自带 BFF 在 8647。搭配 hiclaw 后端时另起 `pnpm dev:bridge`，
+并设 `HERMES_COMPETITION_MODE=1` 与 `HERMES_COMPETITION_BACKEND_URL=http://127.0.0.1:8650`，
+详见 [studio 前端 + hiclaw 后端](docs/STUDIO_ON_HICLAW.md)。
 
 常用校验命令：
 

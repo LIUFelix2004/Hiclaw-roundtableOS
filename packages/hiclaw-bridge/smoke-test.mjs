@@ -6,7 +6,7 @@
  *
  * 需要 bridge 已在 8650 运行（mock 模式即可）。
  */
-import { io } from '../web/node_modules/socket.io-client/build/esm/index.js';
+import { io } from 'socket.io-client';
 
 const URL = process.env.BRIDGE_URL || 'http://127.0.0.1:8650';
 const socket = io(URL, { transports: ['websocket'], reconnection: false });

@@ -96,3 +96,22 @@ type _Assert<T extends true> = T;   // never extends true → 成立
 治理链路（Validator 四维校验 / Rollback 四级自愈 / Experience Memory）在
 orchestrator 侧属 T5，尚未实现。bridge 收到 `rollback:respond` 只做如实回执，
 不伪造恢复结果。答辩若要讲治理闭环，目前仍需走 legacy server(8648)。
+
+## 关于 packages/web
+
+原来仓库里有两个前端：`packages/web`（Next.js，英文）和 `packages/hermes-studio`
+（Vue，中文，3D 圆桌）。因为根脚本 `dev:web` 指向前者、而 studio 从来不在
+pnpm workspace 里，`pnpm dev` 一直启动的是 web，导致反复启错。
+
+现已删除 `packages/web`，仓库只保留 studio 一个前端：
+
+- `pnpm dev` / `pnpm dev:studio` → studio（8649）
+- `pnpm dev:bridge` → hiclaw-bridge（8650）
+- `pnpm dev:server` → legacy server（8648）
+
+**注意**：治理闭环的完整可视化（DAG 画布上的回滚标记、Validator 评分卡片）
+原先只在 `packages/web` 里实现，删除后这部分 UI 不复存在。studio 侧的治理呈现
+走的是另一条路——BFF 把 `validator:result` 翻译成对话里的 `**Validation ✅**`
+文本、`rollback:*` 翻译成 `agent.event`，只在对话视图可见，圆桌页面不显示。
+
+代码仍在 git 历史里，需要时可从删除前的提交取回。
