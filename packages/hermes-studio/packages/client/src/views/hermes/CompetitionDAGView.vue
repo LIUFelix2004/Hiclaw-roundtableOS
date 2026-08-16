@@ -17,7 +17,7 @@ onMounted(() => { if (!dag.tasks.length) dag.setTaskPlan([]) })
 </script>
 <template>
   <main class="competition-view dag-view">
-    <header class="view-header"><div><span class="eyebrow">AGENTOS</span><h1>执行 DAG</h1><p>多智能体任务实时编排</p></div><NTag type="info">已完成 {{ dag.overallProgress }}%</NTag></header>
+    <header class="view-header"><div><span class="eyebrow">HICLAW</span><h1>执行 DAG</h1><p>多智能体任务实时编排</p></div><NTag type="info">已完成 {{ dag.overallProgress }}%</NTag></header>
     <NAlert v-if="!dag.tasks.length" type="info" :show-icon="false">
       <p style="margin:0 0 8px">此面板实时展示多智能体任务的执行流程图。</p>
       <p style="margin:0">请在「对话」页面发送消息，系统将自动规划 Research → Analyst → Writer 等子任务并在此展示 DAG 依赖关系与执行进度。</p>

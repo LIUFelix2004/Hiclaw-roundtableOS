@@ -43,7 +43,7 @@ const defaultSlides: AgentSlide[] = [
     image: '/agents/codex.png',
   },
   {
-    name: 'Hermes Agent',
+    name: 'Hiclaw Agent',
     subtitle: '任务编排与协调',
     color: '#111111',
     image: '/agents/hermes.png',

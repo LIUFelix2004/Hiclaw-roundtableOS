@@ -26,7 +26,7 @@ const routeProfile = computed(() => {
 })
 
 const isStandaloneChat = computed(() => route.meta?.standaloneChat === true)
-const productTitle = __COMPETITION_MODE__ ? 'AgentOS' : 'Hermes Studio'
+const productTitle = __COMPETITION_MODE__ ? 'Hiclaw RoundtableOS' : 'Hermes Studio'
 const showDAGPanel = __COMPETITION_MODE__
 const dagPanelCollapsed = ref(false)
 const tabTitle = computed(() => {

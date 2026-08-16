@@ -113,9 +113,9 @@ function handleUpdateClick() {
   <aside class="sidebar" :class="{ open: appStore.sidebarOpen, collapsed: appStore.sidebarCollapsed }" @click="handleSidebarClick">
     <div v-if="competitionMode" class="agentos-brand">
       <div class="agentos-logo">
-        <img :src="brandLogoPng" alt="AgentOS" width="40" height="40" style="border-radius: 10px; object-fit: cover;" />
+        <img :src="brandLogoPng" alt="Hiclaw" width="40" height="40" style="border-radius: 10px; object-fit: cover;" />
       </div>
-      <span class="agentos-title">AgentOS</span>
+      <span class="agentos-title">Hiclaw</span>
       <span class="agentos-subtitle">多智能体协同平台</span>
     </div>
     <nav class="sidebar-nav">
@@ -404,7 +404,7 @@ function handleUpdateClick() {
           @keydown.enter="openChangelog"
           @keydown.space.prevent="openChangelog"
         >
-          {{ competitionMode ? 'AgentOS v1.0' : `Studio v${appStore.serverVersion || '0.1.0'}` }}
+          {{ competitionMode ? 'Hiclaw v1.0' : `Studio v${appStore.serverVersion || '0.1.0'}` }}
         </span>
         <ThemeSwitch />
       </div>

@@ -13,7 +13,7 @@ function start(config: any) { roundtable.startRoundtable(config) }
 <template>
   <main class="competition-view roundtable-view">
     <header class="view-header">
-      <div><span class="eyebrow">AGENTOS</span><h1>AI 圆桌会议</h1><p>多智能体并行辩论、质疑与综合，输出统一结论</p></div>
+      <div><span class="eyebrow">HICLAW</span><h1>AI 圆桌会议</h1><p>多智能体并行辩论、质疑与综合，输出统一结论</p></div>
       <div class="status-row">
         <NTag v-if="roundtable.totalTokens > 0" size="small">{{ roundtable.totalTokens.toLocaleString() }} tokens</NTag>
         <NTag :type="roundtable.isRunning ? 'warning' : roundtable.phase === 'done' ? 'success' : 'default'">{{ roundtable.phase === 'synthesizing' ? '综合分析中...' : roundtable.isRunning ? `第 ${roundtable.activeRound} 轮` : roundtable.phase === 'done' ? '已完成' : '就绪' }}</NTag>
