@@ -35,18 +35,21 @@ studio client (vite 8649)
 
 ```bash
 pnpm install
+cd packages/hermes-studio && npm install && cd ../..
 
-# 1) bridge（mock 模式，控制台会打印 mode=mock）
-MOCK_LLM=1 pnpm --filter @hermes/hiclaw-bridge start
-
-# 2) studio（前端 8649，BFF 8647）
-cd packages/hermes-studio
-HERMES_COMPETITION_MODE=1 \
-HERMES_COMPETITION_BACKEND_URL=http://127.0.0.1:8650 \
-npm run dev
+pnpm demo
 ```
 
-打开 `http://localhost:8649`，进圆桌页发起议题即可。
+一条命令拉起 bridge(8650) + studio BFF(8647) + 前端(8649)，就绪后会打印入口地址。
+Ctrl+C 一次性关掉全部。手动分开起也可以：
+
+```bash
+pnpm dev:bridge                      # 终端 1
+cd packages/hermes-studio            # 终端 2
+HERMES_COMPETITION_MODE=1 HERMES_COMPETITION_BACKEND_URL=http://127.0.0.1:8650 npm run dev
+```
+
+打开 `http://localhost:8649`，左侧「AI 圆桌」→ 输入议题 → 发起圆桌。
 
 > 别用 `npm start` 起 studio —— 那个脚本是 `vite --port 8648`，会和 legacy
 > server 的默认端口撞车。`npm run dev` 用的是 8649/8647，是安全的。
@@ -54,7 +57,7 @@ npm run dev
 ### 真实 hiclaw 链路
 
 在 `.env` 里配齐 `HICLAW_MATRIX_*` 与 `HICLAW_WORKERS`（见 `.env.example`），
-去掉 `MOCK_LLM=1` 再起 bridge，`/health` 会返回 `mode: "live"`。
+用 `pnpm demo:live` 启动（等价于去掉 `MOCK_LLM=1`），`/health` 会返回 `mode: "live"`。
 
 任一必需项缺失、或 Matrix 登录失败，bridge 会自动降级到 mock 并在日志里说明，
 不会让演示中断。

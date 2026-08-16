@@ -5,6 +5,8 @@
   "description": "Hermes AgentOS - Production-grade Multi-Agent Infrastructure",
   "scripts": {
     "dev": "pnpm dev:studio",
+    "demo": "node scripts/dev-competition.mjs",
+    "demo:live": "node scripts/dev-competition.mjs --live",
     "dev:studio": "cd packages/hermes-studio && npm run dev",
     "dev:bridge": "pnpm --filter @hermes/hiclaw-bridge dev",
     "dev:server": "pnpm --filter @hermes/server dev",
