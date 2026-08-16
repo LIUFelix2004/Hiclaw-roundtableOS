@@ -13,7 +13,7 @@
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import net from 'node:net';
+import http from 'node:http';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LIVE = process.argv.includes('--live');
@@ -28,12 +28,17 @@ const C = {
   cyan: '\x1b[36m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m',
 };
 
-function portBusy(port) {
+// 判断服务是否真正可用：发一个真实 HTTP 请求，而不是试图占用端口。
+// Windows 允许在别的进程监听 0.0.0.0:PORT 时再绑定 127.0.0.1:PORT，
+// 因此 portBusy() 在 Windows 上会把「已就绪」误判为「未就绪」。
+function httpAlive(port, timeout = 2000) {
   return new Promise((res) => {
-    const srv = net.createServer();
-    srv.once('error', () => res(true));
-    srv.once('listening', () => srv.close(() => res(false)));
-    srv.listen(port, '127.0.0.1');
+    const req = http.get({ host: '127.0.0.1', port, path: '/', timeout }, (r) => {
+      r.resume();
+      res(true);
+    });
+    req.on('error', () => res(false));
+    req.on('timeout', () => { req.destroy(); res(false); });
   });
 }
 
@@ -87,8 +92,8 @@ process.on('SIGTERM', shutdown);
 
 const main = async () => {
   for (const [port, who] of [[BRIDGE_PORT, 'hiclaw-bridge'], [BFF_PORT, 'studio BFF'], [WEB_PORT, 'studio 前端']]) {
-    if (await portBusy(port)) {
-      console.error(`${C.red}端口 ${port}（${who}）已被占用${C.reset}，请先关掉占用它的进程再试。`);
+    if (await httpAlive(port, 1200)) {
+      console.error(`${C.red}端口 ${port}（${who}）上已有服务在跑${C.reset}，请先关掉它再试。`);
       process.exit(1);
     }
   }
@@ -112,7 +117,7 @@ const main = async () => {
   const started = Date.now();
   const poll = setInterval(async () => {
     if (shuttingDown) return clearInterval(poll);
-    if (!(await portBusy(WEB_PORT))) {
+    if (!(await httpAlive(WEB_PORT))) {
       if (Date.now() - started > 120_000) {
         clearInterval(poll);
         console.log(`\n${C.yellow}前端 120s 内未就绪，请查看上面的 [studio] 日志。${C.reset}`);
