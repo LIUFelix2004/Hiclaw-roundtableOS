@@ -1,3 +1,5 @@
+// 必须最先执行：把根目录 .env 载入 process.env，之后的模块级读取才拿得到值。
+import './load-env';
 import Koa from 'koa';
 import cors from '@koa/cors';
 import { createServer } from 'http';
